@@ -1,76 +1,116 @@
-"use client"; // Required for usePathname
+"use client";
 
 import Link from "next/link";
 import React from "react";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FolderTree, 
-  Zap, 
-  Wallet, 
-  UserCog ,
-  PanelBottom
+import {
+  LayoutDashboard,
+  Users,
+  FolderTree,
+  Zap,
+  Wallet,
+  UserCog,
+  PanelBottom,
 } from "lucide-react";
 
+type SidebarProps = {
+  collapsed: boolean;
+};
+
 const menuItems = [
-  { group: "General", items: [
-    { name: "Overview", href: "/dashboard", icon: <PanelBottom size={20} /> },
-    { name: "Dashbaord", href: "/dashboard/admin", icon: <LayoutDashboard size={20} /> },
-    { name: "Customers", href: "/dashboard/admin/customers", icon: <Users size={20} /> },
-  ]},
-  { group: "Services", items: [
-    { name: "Service Types", href: "/dashboard/admin/service-types", icon: <FolderTree size={20} /> },
-    { name: "Services", href: "/dashboard/admin/services", icon: <Zap size={20} /> },
-  ]},
-  { group: "Finance", items: [
-    { name: "Monthly Bills", href: "/dashboard/admin/bills", icon: <Wallet size={20} /> },
-  ]},
-  { group: "Users", items: [
-    { name: "Users", href: "/dashboard/admin/users", icon: <UserCog size={20} /> },
-  ]},
+  {
+    group: "General",
+    items: [
+      { name: "Overview", href: "/dashboard", icon: <PanelBottom size={20} /> },
+      {
+        name: "Dashboard",
+        href: "/dashboard/admin",
+        icon: <LayoutDashboard size={20} />,
+      },
+      {
+        name: "Customers",
+        href: "/dashboard/admin/customers",
+        icon: <Users size={20} />,
+      },
+    ],
+  },
+  {
+    group: "Services",
+    items: [
+      {
+        name: "Service Types",
+        href: "/dashboard/admin/service-types",
+        icon: <FolderTree size={20} />,
+      },
+      {
+        name: "Services",
+        href: "/dashboard/admin/services",
+        icon: <Zap size={20} />,
+      },
+    ],
+  },
+  {
+    group: "Finance",
+    items: [
+      {
+        name: "Monthly Bills",
+        href: "/dashboard/admin/bills",
+        icon: <Wallet size={20} />,
+      },
+    ],
+  },
+  {
+    group: "Users",
+    items: [
+      {
+        name: "Users",
+        href: "/dashboard/admin/users",
+        icon: <UserCog size={20} />,
+      },
+    ],
+  },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <ul className="menu p-4 w-72 min-h-full bg-base-100 text-base-content border-r border-base-200">
-      {/* Brand Logo */}
-      <li className="mb-8 px-2">
-        <Link href="/" className="text-xl font-black text-primary tracking-tighter hover:bg-transparent px-0">
-          MICRO DATASOFT
-        </Link>
-      </li>
+    <ul className={`menu min-h-full bg-base-100 border-r border-base-200 p-2 transition-all duration-300 ${collapsed ? "w-20" : "w-72"}`}>
+      {/* Logo */}
+      <li className="mb-8 px-2 flex justify-center lg:justify-start">
+      <Link href="/" className="text-xl font-black text-primary tracking-tighter">
+        {collapsed ? "MD" : "MICRO DATASOFT"}
+      </Link>
+    </li>
+
 
       {menuItems.map((section) => (
         <React.Fragment key={section.group}>
-          <li className="menu-title opacity-70 uppercase text-[10px] font-bold tracking-widest mt-6 mb-1">
-            {section.group}
-          </li>
-          
+          {!collapsed && (
+            <li className="menu-title uppercase text-[10px] font-bold tracking-widest">
+              {section.group}
+            </li>
+          )}
+
           {section.items.map((item) => {
-            // Check if current path matches the link
             const isActive = pathname === item.href;
 
             return (
-              <li key={item.href} className="mt-1">
-                <Link 
-                  href={item.href} 
-                  className={`flex gap-3 px-4 py-3 transition-all duration-200 rounded-lg ${
-                    isActive 
-                      ? "bg-primary text-primary-content font-semibold shadow-md active:!bg-primary" 
-                      : "hover:bg-base-200 text-base-content/70 hover:text-base-content"
-                  }`}
+              <li key={item.href}>
+                <Link href={item.href}
+                  className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all tooltip tooltip-top`}
+                  data-tip={item.name}
                 >
-                  <span className={`${isActive ? "text-primary-content" : "text-primary"}`}>
+                  <span className={isActive ? "text-primary-content" : "text-primary"}>
                     {item.icon}
-                  </span> 
-                  {item.name}
+                  </span>
+
+                  {!collapsed && <span>{item.name}</span>}
                 </Link>
               </li>
             );
           })}
+
         </React.Fragment>
       ))}
     </ul>

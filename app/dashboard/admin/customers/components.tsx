@@ -160,31 +160,51 @@ export default function CustomerCrud() {
     }),
     columnHelper.display({
       id: 'actions',
-      header: () => <div className="text-right">Actions</div>, // Align the header text too
+      header: () => (
+        <div className="text-right w-full">Actions</div>
+      ),
       cell: (props) => {
         const customer = props.row.original;
+
         return (
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-1">
             {customer.aggrePaper ? (
-              <Link href={customer.aggrePaper}  target="_blank" rel="noopener noreferrer"
-                className="btn btn-ghost btn-sm text-success tooltip" data-tip="View Agreement">
-                <FileText size={18} /> 
+              <Link href={customer.aggrePaper} target="_blank"
+                rel="noopener noreferrer"  data-tip="View Agreement"
+                className="btn btn-ghost btn-sm text-success tooltip"
+              >
+                <FileText size={18} />
               </Link>
             ) : (
-              <div className="btn btn-sm btn-disabled btn-ghost opacity-20 tooltip" data-tip="No Paper">
+              <div className="btn btn-sm btn-disabled btn-ghost opacity-40 tooltip" data-tip="No Paper">
                 <FileText size={18} />
               </div>
             )}
 
-            <Link href={`/dashboard/admin/customers/${customer.id}/services`} className="tooltip btn btn-ghost btn-sm text-info" data-tip="View Services">
-            <Plug2 size={18} className='text-warning' />
-          </Link>
-            <button data-tip="Edit Customer" type="button" onClick={() => openModal(props.row.original)} className="tooltip btn btn-ghost btn-sm text-info"> <Edit2 size={18} /></button>
-            <button data-tip="Delete Customer" type="button" onClick={() => handleDeleteType(props.row.original.id)} className="tooltip btn btn-ghost btn-sm text-error"><Trash2 size={18} /></button>
+            {/* Services with badge */}
+            <Link href={`/dashboard/admin/customers/${customer.id}/services`} className="tooltip btn btn-dash btn-sm relative" data-tip="View Services" >
+              <Plug2 size={18} className="text-warning" />
+
+              {customer.servicesCount > 0 && (
+                <span className="absolute -top-1 -left-1 badge rounded-2xl badge-xs badge-warning">
+                  {customer.servicesCount}
+                </span>
+              )}
+            </Link>
+
+            <button data-tip="Edit Customer" type="button" onClick={() => openModal(customer)} className="tooltip text-info btn btn-dash btn-sm" >
+              <Edit2 size={18} />
+            </button>
+
+            <button data-tip="Delete Customer" type="button" onClick={() => handleDeleteType(customer.id)}
+              className="tooltip btn btn-error btn-sm">
+              <Trash2 size={18} />
+            </button>
           </div>
         );
       },
     })
+
   ];
 
 

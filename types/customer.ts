@@ -1,4 +1,5 @@
 export type Customer = {
+  servicesCount: number;
   id: string;
   name: string;
   customerCode: string;

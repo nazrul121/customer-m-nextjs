@@ -88,7 +88,7 @@ export function DataTable<TData extends { id: string | number }, TValue>({
           </div>
         )}
 
-        <div className="overflow-x-auto min-h-50">
+        <div className="min-h-50">
           {!isLoading && data.length === 0 ? (
             /* 🔑 Integrated the Nice Empty State */
             <EmptyState 

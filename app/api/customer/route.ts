@@ -5,42 +5,68 @@ import prisma from '@/lib/prisma';
 import { saveFile, deleteOldFile } from '@/lib/file-storage';
 // --- GET (Read All) ---
 export async function GET(request: Request) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const page = parseInt(searchParams.get('page') || '1');
-        const pageSize = parseInt(searchParams.get('pageSize') || '10');
-        const skip = (page - 1) * pageSize;
-        const searchTerm = searchParams.get('search') || '';
-        
-        const whereClause: any = {};
-        if (searchTerm) {
-            whereClause.OR = [
-                { name: { contains: searchTerm } },
-                { email: { contains: searchTerm } },
-            ];
-        }
+  try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '10');
+    const skip = (page - 1) * pageSize;
+    const searchTerm = searchParams.get('search') || '';
 
-        const sortId = searchParams.get('sortId') || 'createdAt';
-        const sortDir = searchParams.get('sortDir') || 'desc';
-
-        const [customers, totalCount] = await prisma.$transaction([
-            prisma.customer.findMany({
-                where: whereClause,
-                skip,
-                take: pageSize,
-                orderBy: { [sortId]: sortDir },
-            }),
-            prisma.customer.count({ where: whereClause }), // Fixed: was prisma.user.count
-        ]);
-        
-        return NextResponse.json({ 
-            data: customers, 
-            meta: { totalCount, pageSize, currentPage: page }
-        });
-    } catch (error) {
-        return NextResponse.json({ message: 'Failed to fetch customers' }, { status: 500 });
+    const whereClause: any = {};
+    if (searchTerm) {
+      whereClause.OR = [
+        { name: { contains: searchTerm} },
+        { email: { contains: searchTerm} },
+      ];
     }
+
+    const sortId = searchParams.get('sortId') || 'createdAt';
+    const sortDir = searchParams.get('sortDir') || 'desc';
+
+    const [customers, totalCount] = await prisma.$transaction([
+      prisma.customer.findMany({
+        where: whereClause,
+        skip,
+        take: pageSize,
+        orderBy: { [sortId]: sortDir as 'asc' | 'desc' },
+
+        // ⭐ ADD THIS
+        include: {
+          _count: {
+            select: {
+              services: true, // CustomerService[]
+            },
+          },
+        },
+      }),
+
+      prisma.customer.count({ where: whereClause }),
+    ]);
+
+    // ⭐ Normalize response
+    const formattedCustomers = customers.map((c) => ({
+      ...c,
+      servicesCount: c._count.services,
+      _count: undefined, // optional: remove internal Prisma field
+    }));
+
+    return NextResponse.json({
+      data: formattedCustomers,
+      meta: {
+        totalCount,
+        pageSize,
+        currentPage: page,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { message: 'Failed to fetch customers' },
+      { status: 500 }
+    );
+  }
 }
+
 
 // --- POST (Create) ---
 export async function POST(request: Request) {
