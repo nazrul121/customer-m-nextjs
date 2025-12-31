@@ -1,21 +1,16 @@
+import ThemeToggle from "@/app/components/ThemeSwitch";
 import Image from "next/image";
 import Link from "next/link";
-import ThemeToggle from "./components/ThemeSwitch";
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center font-sans bg-base-100">
+export default function Register() {
+    return (
+        <div className="flex min-h-screen items-center justify-center font-sans bg-base-100">
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center py-32 px-16 sm:items-start">
         
         {/* Header Section: Logo and Theme Button */}
         <div className="flex w-full items-center justify-between mb-12">
-          <Image 
-            src={'/images/logo.png'} 
-            style={{ height: '50px', width: 'auto' }} 
-            alt="Micro Datasoft" 
-            width={300} 
-            height={300}
-            priority
+          <Image src={'/images/logo.png'} style={{ height: '50px', width: 'auto' }} 
+            alt="Micro Datasoft" width={300} height={300} priority
           />
           <ThemeToggle />
         </div>
@@ -26,18 +21,13 @@ export default function Home() {
             Customer Managing App
           </h1>
           <p className="max-w-md text-lg leading-8 text-base-content/70">
-            You have to login first to continue{" "}
-            <Link href="/auth/login" className="font-medium hover:underline"> 
-              Login 
-            </Link>
-            {" "}or{" "}
-            <Link href="/auth/register" className="font-medium hover:underline" > 
-              Register
-            </Link>
+            Register feature is not enabled <b>Right Now</b>{" "} Please 
+            <Link href="/auth/login" className="font-medium hover:underline"> Login </Link>
+
           </p>
         </div>
    
       </main>
     </div>
-  );
+    );
 }
