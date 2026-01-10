@@ -2,5 +2,5 @@
 @plugin "daisyui";
 
 @plugin "daisyui" {
-  themes: wireframe --default, night --prefersdark;
+  themes: night --default, wireframe;
 }

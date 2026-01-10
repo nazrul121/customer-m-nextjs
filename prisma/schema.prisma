@@ -5,31 +5,49 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma/client"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "mysql"
 }
 
-// --- AUTHENTICATION MODELS ---
 
 model User {
   id            String    @id
   name          String    @db.Text
   email         String
-  phone         String?
   emailVerified Boolean   @default(false)
+  phoneNumber         String?
+  phoneNumberVerified Boolean   @default(false)
   image         String?   @db.Text
+  role          String   @default("user")
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
 
   @@unique([email])
-  @@unique([phone])
+  @@unique([phoneNumber])
   @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?  @db.Text
+  userAgent String?  @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId(length: 191)])
+  @@map("session")
 }
 
 model Account {
@@ -50,22 +68,6 @@ model Account {
 
   @@index([userId(length: 191)])
   @@map("account")
-}
-
-model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?  @db.Text
-  userAgent String?  @db.Text
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([token])
-  @@index([userId(length: 191)])
-  @@map("session")
 }
 
 model Verification {
@@ -113,7 +115,6 @@ model Service {
   @@index([serviceTypeId])
 }
 
-
 model Customer {
   id           String @id @default(cuid())
   customerCode String @unique
@@ -129,7 +130,6 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
 
 model CustomerService {
   id String @id @default(cuid())

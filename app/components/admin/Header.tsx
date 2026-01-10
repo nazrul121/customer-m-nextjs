@@ -1,6 +1,12 @@
+"use client";
+
 import ThemeToggle from "@/app/components/ThemeSwitch";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+
 
 export default function Header() {
+  const router = useRouter();
   return (
     <header className="navbar bg-base-100 border-b border-base-300 sticky top-0 z-30">
       <div className="flex-none lg:hidden">
@@ -27,7 +33,7 @@ export default function Header() {
           </div>
           <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-300">
             <li><a>Profile Settings</a></li>
-            <li><a className="text-error">Logout</a></li>
+            <li><a className="text-error"  onClick={() => authClient.signOut({ fetchOptions: { onSuccess: () => router.push("/") } })}>Logout</a></li>
           </ul>
         </div>
       </div>

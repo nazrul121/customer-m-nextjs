@@ -1,5 +1,7 @@
 
+import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import "./globals.css";
+import { ToastContainer } from 'react-toastify';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,7 +12,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `
               (function() {
                 try {
-                  const savedTheme = localStorage.getItem('app-theme') || 'wireframe';
+                  // Change 'wireframe' to 'night' here 👇
+                  const savedTheme = localStorage.getItem('app-theme') || 'night';
                   document.documentElement.setAttribute('data-theme', savedTheme);
                 } catch (e) {}
               })();
@@ -18,7 +21,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>  
+        <ToastContainer />
+        <ReactQueryProvider>
+          {children}
+        </ReactQueryProvider>
+      </body>
     </html>
   );
 }
