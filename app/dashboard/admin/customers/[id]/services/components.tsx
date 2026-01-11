@@ -6,23 +6,20 @@ import { DataTable } from '@/app/components/common/DataTable';
 import { formatHumanReadableDate } from '@/lib/utils';
 import { Modal } from '@/app/components/common/Modal';
 import Link from 'next/link';
-import { ArrowLeft, FileText, Plug2, PlusCircle, User } from 'lucide-react';
+import { ArrowLeft, PlusCircle, User } from 'lucide-react';
 import { CustomerService } from '@/types/customerService';
-import { toast } from 'react-toastify/unstyled';
+import { toast } from 'react-toastify';
 import { CustomerServiceForm } from '@/lib/schemas';
-import { Icon } from '@iconify/react';
 import { FormPage } from './form';
 import { Customer } from '@/types/customer';
 import Image from 'next/image';
 
 interface ClientProps {
-  customer: Customer; // Receive the full object
+  customer: Customer;
 }
 
 export default function CustomerServicesClient({ customer }: ClientProps) {
-  
   const queryClient = useQueryClient();
-  // --- 1. State ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCustomerService, setCurrentCustomerService] = useState<CustomerService | null>(null);
 
@@ -31,25 +28,21 @@ export default function CustomerServicesClient({ customer }: ClientProps) {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [globalFilter, setGlobalFilter] = useState('');
 
-  // --- 2. Data Fetching (Uses unique queryKey based on all states) ---
+  // 2. Data Fetching
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['customers', pagination.pageIndex, pagination.pageSize, globalFilter, sorting],
+    queryKey: ['customer-services', customer.id, pagination.pageIndex, pagination.pageSize, globalFilter, sorting],
     queryFn: async () => {
-      const pageParam = pagination.pageIndex + 1;
-      const sortId = sorting.length > 0 ? sorting[0].id : '';
-      const sortDire = sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : '';
-      
       const params = new URLSearchParams({
-        page: pageParam.toString(),
+        page: (pagination.pageIndex + 1).toString(),
         pageSize: pagination.pageSize.toString(),
-        // Note: The route should handle .trim().toLowerCase() on this search term
-        search: globalFilter, 
-        ...(sortId && { sortId, sortDir: sortDire })
+        search: globalFilter,
+        sortId: sorting[0]?.id || '',
+        sortDir: sorting[0]?.desc ? 'desc' : 'asc'
       });
 
-      const response = await fetch(`/api/customer/${customer.id}/services?page=${pagination.pageIndex + 1}`);
-      if (!response.ok) throw new Error('Failed to fetch paginated Customers');
-      return await response.json();
+      const response = await fetch(`/api/customer/${customer.id}/services?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch services');
+      return response.json();
     },
     placeholderData: (previousData) => previousData,
   });
@@ -57,9 +50,9 @@ export default function CustomerServicesClient({ customer }: ClientProps) {
   const customer_services = data?.data || [];
   const totalCount = data?.meta?.totalCount || 0;
 
-  // --- 3. Action Handlers ---
-  const openModal = (customerService: CustomerService | null = null) => {
-    setCurrentCustomerService(customerService);
+  // 3. Action Handlers
+  const openModal = (service: CustomerService | null = null) => {
+    setCurrentCustomerService(service);
     setIsModalOpen(true);
   };
 
@@ -68,141 +61,197 @@ export default function CustomerServicesClient({ customer }: ClientProps) {
     setCurrentCustomerService(null);
   };
 
-  const handleCustomerSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['customers'] }); 
+  const handleSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['customer-services'] }); 
     closeModal();
   };
 
-
-  const handleDeleteType = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete?')) return;
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this service?')) return;
     try {
-      await fetch('/api/customer/'+customer.id+'/services', {
+      const response = await fetch(`/api/customer/${customer.id}/services`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
-      
-      // 🔑 Invalidate cache to force table refresh after delete
-      queryClient.invalidateQueries({ queryKey: ['customers'] }); 
-      toast.error("Data deleted successfully!");
+      if (!response.ok) throw new Error('Delete failed');
+      queryClient.invalidateQueries({ queryKey: ['customer-services'] }); 
+      toast.error("Service removed successfully!");
     } catch (error) {
       console.error(error);
-      alert('Delete failed');
+      toast.error("Delete failed");
     }
   };
 
-  const onSubmit = async (data: CustomerServiceForm & { id?: number }) => {
-    const method = data.id ? 'PUT' : 'POST';
-    try {
-      const response = await fetch('/api/customer', {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+  const onSubmit = async (formData: CustomerServiceForm & { id?: string }) => {
+    const method = formData.id ? 'PUT' : 'POST';
+    const response = await fetch(`/api/customer/${customer.id}/services`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
 
-      if (!response.ok) {
-        // 🔑 Ensure a structured error is thrown for UserModal to catch and display
-        const errorData = await response.json();
-        throw new Error(JSON.stringify({ 
-            status: response.status, 
-            message: errorData.message || 'Customer error occurred.' 
-        }));
-      }
-
-    } catch (error) {
-      console.error(error);
-      throw error; // Re-throw for UserModal to catch and display validation errors
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Operation failed');
     }
   };
 
-  // --- 4. Column Definitions ---
+  // 4. Columns
   const columnHelper = createColumnHelper<CustomerService>();
   const columns = [
-    // columnHelper.accessor('photo', {
-    //     header: 'Photo',
-    //     cell: (info) => {
-    //     const photoUrl = info.getValue();
-    //     return (
-    //       <div className="avatar">
-    //         <div className="mask mask-squircle w-10 h-10 bg-base-300">
-    //             {photoUrl ? (
-    //             <img src={photoUrl}  alt="Customer" 
-    //                 onError={(e) => {
-    //                     (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=User&background=random';
-    //                 }}
-    //             />
-    //             ) : (
-    //             <div className="flex items-center justify-center w-full h-full opacity-30">
-    //                 <User size={20} />
-    //             </div>
-    //             )}
-    //         </div>
-    //       </div>
-    //     );
-    //     },
-    // }),
-    // columnHelper.accessor('name', {
-    //   header: 'Customer Name',
-    //   cell: (info) => info.getValue(),
-    // }),
+    // 1. Service Name (Nested relation)
+  columnHelper.accessor('service', {
+    header: 'Service',
+    // Ensure the id matches what we check for in the backend sorting
+    id: 'service', 
+    cell: (info) => {
+      const service = info.getValue(); 
+      return (
+        <div className="flex flex-col">
+          {/* service.name exists in your type */}
+          <span className="font-bold text-primary">
+            {service?.name || 'Unknown Service'}
+          </span>
+          
+          <span className="text-[10px] opacity-60 uppercase tracking-tighter">
+            {/* 🔑 FIX: Changed .name to .title based on your Service type */}
+            Type: {service?.serviceType?.title || 'N/A'}
+          </span>
+        </div>
+      );
+    },
+  }),
 
-    columnHelper.accessor('createdAt', {
-      header: 'Created At',
-      cell: (info) => formatHumanReadableDate(info.getValue() as unknown as string),
-    }),
-    columnHelper.display({
-      id: 'actions',
-      header: () => <div className="text-right">Actions</div>, // Align the header text too
-      cell: (props) => {
-        const customer = props.row.original;
+    // 2. Financials (Initial Cost & Monthly Charge)
+    columnHelper.accessor('initCost', {
+      header: 'Subscription fees',
+      cell: (info) => {
+        const row = info.row.original;
         return (
-          <div className="flex items-center justify-end gap-2">
-           
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1 text-xs">
+              <span className="opacity-60">Setup:</span>
+              <span className="font-semibold">{Number(row.initCost).toLocaleString()} BDT</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs">
+              <span className="opacity-60">MMC:</span>
+              <span className="font-semibold text-secondary">{Number(row.mmc).toLocaleString()} BDT</span>
+            </div>
           </div>
         );
       },
+    }),
+
+    // 3. Subscription Period & Status
+    columnHelper.accessor('expiryDate', {
+      header: 'Status & Validity',
+      cell: (info) => {
+        const expiry = new Date(info.getValue());
+        const isExpired = expiry < new Date();
+        const startDate = formatHumanReadableDate(info.row.original.startDate as any);
+        
+        return (
+          <div className="flex flex-col gap-1">
+            <div className={`badge badge-sm font-bold ${isExpired ? 'badge-error' : 'badge-success'} gap-1`}>
+              {isExpired ? 'EXPIRED' : 'ACTIVE'}
+            </div>
+            <span className="text-[12px] opacity-70">
+              {startDate} → {formatHumanReadableDate(expiry as any)}
+            </span>
+          </div>
+        );
+      },
+    }),
+
+    // 4. Auto-Repeat Indicator
+    columnHelper.accessor('isRepeat', {
+      header: 'Repeat',
+      cell: (info) => (
+        <div className={`badge badge-outline badge-xs ${info.getValue() === 'YES' ? 'border-primary text-primary' : 'opacity-30'}`}>
+          {info.getValue()}
+        </div>
+      ),
+    }),
+
+    // 5. Actions
+    columnHelper.display({
+      id: 'actions',
+      header: () => <div className="text-right">Actions</div>,
+      cell: (props) => (
+        <div className="flex items-center justify-end gap-1">
+          <button 
+            onClick={() => openModal(props.row.original)} 
+            className="btn btn-ghost btn-xs text-info hover:bg-info/10"
+            title="Edit Subscription"
+          >
+            Edit
+          </button>
+          <div className="divider divider-horizontal m-0 h-4 self-center opacity-20"></div>
+          <button 
+            onClick={() => handleDelete(props.row.original.id)} 
+            className="btn btn-ghost btn-xs text-error hover:bg-error/10"
+            title="Delete Record"
+          >
+            Delete
+          </button>
+        </div>
+      ),
     })
   ];
-
 
   return (
     <main className="container mx-auto p-4 md:p-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          {/* ⬅️ Back Button */}
-          <Link  href="/dashboard/admin/customers" className="btn btn-ghost btn-circle shadow-sm border border-base-300 hover:bg-base-200" >
+          <Link href="/dashboard/admin/customers" className="btn btn-ghost btn-circle border border-base-300">
             <ArrowLeft size={20} />
           </Link>
-          
           <div>
-         
-            <h1 className="text-2xl font-bold flex items-center gap-2"> 
-              <Image width={300} height={300} src={customer.photo ? customer.photo : '/images/profile.png'} alt={customer.name} className="w-10 h-10 object-cover" />
-              Service History</h1>
-            <p className="text-sm text-gray-500 font-medium">
-              {customer.name} <span className="mx-1">•</span> {String(customer.phone)}
-            </p>
+            <h1 className="text-2xl font-bold flex items-center gap-3"> 
+              {/* Check if photo exists and isn't an empty string */}
+              {customer.photo ? (
+                <Image width={200} height={200} src={customer.photo} alt={customer.name} 
+                  className="w-10 h-10 rounded-full object-cover border border-base-300" 
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center border border-base-300 text-base-content/80">
+                  <User size={24} />
+                </div>
+              )}
+              {customer.name}
+            </h1>
+            <p className="text-sm text-base-content/60 italic">Contact No: {Number(customer.phone)}, Code: {customer.customerCode}</p>
           </div>
         </div>
-
-        {/* Optional: Add a "Quick Action" button here if needed */}
-        <div className="badge p-4 font-mono">
-          ID: {customer.id} <br />
-          PatientCode: {customer.customerCode}
-        </div>
-        <button className="btn btn-secondary btn-sm"> <PlusCircle size={20} /> Add New</button>
+        <button className="btn btn-secondary btn-sm shadow-sm" onClick={() => openModal()}> 
+            <PlusCircle size={18} /> New Subscription 
+        </button>
       </div>
 
-      <DataTable data={customer_services} columns={columns} totalCount={totalCount} isLoading={isLoading} isFetching={isFetching} pagination={pagination}
-        onPaginationChange={setPagination} sorting={sorting}  onSortingChange={setSorting}globalFilter={globalFilter}
-        onGlobalFilterChange={setGlobalFilter} actionSlot={ "" }
+      <DataTable 
+        data={customer_services} 
+        columns={columns} 
+        totalCount={totalCount} 
+        isLoading={isLoading} 
+        isFetching={isFetching} 
+        pagination={pagination}
+        onPaginationChange={setPagination} 
+        sorting={sorting} 
+        onSortingChange={setSorting}
+        globalFilter={globalFilter}
+        onGlobalFilterChange={setGlobalFilter} 
       />
 
-      {/* <Modal id="type-modal" isOpen={isModalOpen} onClose={closeModal} title={currentCustomerService? 'Edit Customer' : 'Add Customer'}>
-        <FormPage currentCustomerService={currentCustomerService} onSubmit={onSubmit}  onCancel={closeModal}  onSuccess={handleCustomerSuccess} />
-      </Modal>  */}
-
+      <Modal id="service-modal" isOpen={isModalOpen} onClose={closeModal} title={currentCustomerService ? 'Edit Service' : 'Subscription for '+customer.name}>
+        <FormPage 
+            currentCustomerService={currentCustomerService} 
+            onSubmit={onSubmit} 
+            customer={customer}
+            onCancel={closeModal} 
+            onSuccess={handleSuccess} 
+        />
+      </Modal> 
     </main>
   );
 }

@@ -2,12 +2,12 @@ import { Customer } from "./customer";
 import { Service } from "./service";
 
 export type CustomerService = {
+  bills: any;
   id: string;
   customerId: string;
   serviceId: string;
   
-  // Pivot Data (Financials)
-  initCost: number;       // Note: Prisma Decimal usually maps to number or string in TS
+  initCost: number;      
   mmc: number;
   initCostDis: number;
   mmcDis: number;
@@ -15,9 +15,8 @@ export type CustomerService = {
   // Dates and Logic
   startDate: Date | string;
   expiryDate: Date | string;
-  isRepeat: 'YES' | 'NO'; // Based on your Prisma enum YesNo
+  isRepeat: 'YES' | 'NO';
 
-  // Optional Relations (For when you use .include in Prisma)
   customer?: Customer;
   service?: Service;
 

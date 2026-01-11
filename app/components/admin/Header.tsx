@@ -27,13 +27,13 @@ export default function Header() {
         {/* User Dropdown */}
         <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
-            <div className="w-10 rounded-full bg-neutral text-neutral-content">
+            <div className="flex content-center w-10 rounded-full bg-neutral text-neutral-content">
               <span className="text-xs">ADM</span>
             </div>
           </div>
-          <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-300">
-            <li><a>Profile Settings</a></li>
-            <li><a className="text-error"  onClick={() => authClient.signOut({ fetchOptions: { onSuccess: () => router.push("/") } })}>Logout</a></li>
+          <ul tabIndex={0} className="mt-3 z-1 p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-500">
+            <li className="p-1"><a>Profile Settings</a></li>
+            <li className="p-1"><a className="text-error"  onClick={() => authClient.signOut({ fetchOptions: { onSuccess: () => router.push("/") } })}>Logout</a></li>
           </ul>
         </div>
       </div>

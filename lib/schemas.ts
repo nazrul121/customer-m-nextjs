@@ -67,19 +67,22 @@ export const CustomerSchema = z.object({
 export type CustomerForm = z.infer<typeof CustomerSchema>
 
 
-export const CustomerServiceSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  customerCode:z.string().min(5, "customerCode need  min of 5 char"),
-  email: z.string().email("Invalid email").optional().or(z.string().length(0)),
-  phone: z.string()
-    .length(11, "Phone number must be exactly 11 digits")
-    .regex(/^01[3-9]\d{8}$/, "Invalid Bangladesh mobile number format (e.g., 017xxxxxxxx)"),
-  photo: z.any().optional(),
-  aggrePaper: z.any().optional(),
-  status: z.enum(["ACTIVE", "INACTIVE"]),
-});
-export type CustomerServiceForm = z.infer<typeof CustomerServiceSchema>
 
+export const CustomerServiceSchema = z.object({
+  customerId: z.string().min(1),
+  serviceId: z.string().min(1, "Please select a service"),
+  initCost: z.coerce.number().min(0),
+  mmc: z.coerce.number().min(0),
+  initCostDis: z.coerce.number().default(0),
+  mmcDis: z.coerce.number().default(0),
+  startDate: z.coerce.date(),
+  expiryDate: z.coerce.date(),
+  isRepeat: z.enum(["YES", "NO"]),
+});
+
+// 🔑 This is the critical part
+export type CustomerServiceForm = z.input<typeof CustomerServiceSchema>;
+export type CustomerServiceOutput = z.output<typeof CustomerServiceSchema>;
 
 
 
@@ -89,20 +92,12 @@ export const settingSchema = z.object({
 });
 
 
-export const ProductSchema = z.object({
-  title: z.string()
-    .min(2, { message: 'Title must be 2 or more characters long' })
-    .max(80, { message: 'Title cannot exceed 80 characters' }),
-  description: z.string()
-    .max(100, { message: 'Description cannot exceed 100 characters' }),
-  crp: z.number()
-    .min(1, { message: 'Cost Price must be 1 or more characters long' }),
-  photo: OptionalFileSchema,
-})
-export type ProductForm = z.infer<typeof ProductSchema>
+export const MonthlyBillSchema = z.object({
+  customerServiceId: z.string(),
+  monthFor: z.string(),
+  paidAmount: z.coerce.number().min(0),
+  mmc: z.coerce.number().min(0),
+  paidDate: z.coerce.date(),
+});
 
-
-
-
-
-
+export type MonthlyBillForm = z.infer<typeof MonthlyBillSchema>;

@@ -16,57 +16,80 @@ export async function GET(request: Request) {
     // --- 2. Search Parameter ---
     const searchTerm = searchParams.get('search') || '';
     
-    // 🔑 Convert search term to lowercase once for universal comparison
-    const searchLower = searchTerm.toLowerCase().trim();
-
     // --- 3. Build the Prisma Query ---
     const whereClause: any = {};
-    
-    if (searchLower) {
+
+    if (searchTerm) {
+      const searchNumber = Number(searchTerm);
+      
       whereClause.OR = [
-        { title:  { contains: searchLower} },
-        { description: { contains: searchLower} },
+        { name: { contains: searchTerm } },
       ];
+
+      // Only add numeric search if the user actually typed a valid number
+      if (!isNaN(searchNumber)) {
+        whereClause.OR.push({ initCost: { equals: searchNumber } });
+      }
     }
 
-    // 🔑 Sorting Parameters
+    // --- 4. Sorting Parameters ---
     const sortId = searchParams.get('sortId');
-    const sortDir = searchParams.get('sortDir'); // 'asc' or 'desc'
+    const sortDir = searchParams.get('sortDir') as 'asc' | 'desc';
     
-    // 🔑 Prepare the orderBy clause
-    const orderByClause: any = {};
+    let orderByClause: any = {};
+
     if (sortId && (sortDir === 'asc' || sortDir === 'desc')) {
-      // Only apply sorting if we have both an ID and a valid direction
-      orderByClause[sortId] = sortDir;
+      // Handle Nested Sorting for Service Type
+      if (sortId === 'serviceTypeTitle') {
+        orderByClause = {
+          serviceType: {
+            title: sortDir
+          }
+        };
+      } else {
+        // Standard top-level sorting (name, mmc, initCost, etc.)
+        orderByClause[sortId] = sortDir;
+      }
     } else {
-      // Default sort order if none is provided
+      // Default sort
       orderByClause.createdAt = 'desc'; 
     }
 
-    // --- 4. Fetch Data and Total Count ---
+    // --- 5. Fetch Data and Total Count ---
+    // 
     const [services, totalCount] = await prisma.$transaction([
       prisma.service.findMany({
         where: whereClause,
         include: {
-          serviceType: true, // This fetches the full ServiceType object
+          serviceType: true, 
         },
         skip: skip,
         take: pageSize,
         orderBy: orderByClause,
       }),
-      // B) Count the total number of records matching the search filter
-      prisma.user.count({ where: whereClause }),
+      // 🔑 FIXED: Changed from prisma.user.count to prisma.service.count
+      prisma.service.count({ 
+        where: whereClause 
+      }),
     ]);
     
-    // --- 5. Return Data with Total Count ---
+    // --- 6. Return Data with Meta ---
     return NextResponse.json({ 
       data: services, 
-      meta: { totalCount,  pageSize,  currentPage: page }
+      meta: { 
+        totalCount, 
+        pageSize, 
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / pageSize)
+      }
     }, { status: 200 });
 
-  } catch (error) {
-    console.error('Error fetching service :', error);
-    return NextResponse.json({ message: 'Failed to fetch service ' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error fetching services:', error);
+    return NextResponse.json({ 
+      message: 'Failed to fetch services',
+      error: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -145,16 +168,17 @@ export async function PUT(request: Request) {
 
 // --- DELETE ---
 export async function DELETE(request: Request) {
+  console.log('delete');
   try {
     const { id } = await request.json();
-
+    
     // 1. Correct Type Check: Prisma IDs are Strings, not Numbers
     if (!id || typeof id !== 'string') {
       return NextResponse.json({ message: 'A valid Column String ID is required' }, { status: 400 });
     }
 
     // 3. Check if user exists before deleting to avoid Prisma errors
-    const row = await prisma.serviceType.findUnique({ where: { id } });
+    const row = await prisma.service.findUnique({ where: { id } });
     if (!row) {
       return NextResponse.json({ message: 'Data not found' }, { status: 404 });
     }
@@ -162,7 +186,7 @@ export async function DELETE(request: Request) {
     // 4. Delete the user
     // Because your schema has 'onDelete: Cascade', 
     // this will automatically remove Sessions and Accounts.
-    await prisma.serviceType.delete({
+    await prisma.service.delete({
       where: { id: id },
     });
 

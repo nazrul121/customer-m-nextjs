@@ -76,8 +76,8 @@ export default function AccountComponents() {
                 {/* Role-Based Action Card */}
                 <div className="card bg-neutral text-neutral-content shadow-xl border-none">
                     <div className="card-body justify-center items-center text-center">
-                        <div className="avatar placeholder mb-4">
-                            <div className="bg-primary text-primary-content rounded-full w-16">
+                        <div className="avatar placeholder mb-4 ">
+                            <div className="bg-primary text-primary-content rounded-full w-16 flex justify-center items-center">
                                 <span className="text-2xl uppercase">{session.user.role?.[0]}</span>
                             </div>
                         </div>
@@ -96,7 +96,7 @@ export default function AccountComponents() {
 function InfoBox({ label, value, icon }: any) {
     return (
         <div className="flex flex-col gap-1.5 p-3 rounded-xl hover:bg-base-200/50 transition-colors">
-            <span className="text-[10px] font-bold text-base-content/40 flex items-center gap-2 uppercase tracking-[0.1em]">
+            <span className="text-[10px] font-bold text-base-content/40 flex items-center gap-2 uppercase tracking-widest">
                 {icon} {label}
             </span>
             <span className="text-sm font-semibold truncate">{value}</span>

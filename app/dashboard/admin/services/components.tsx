@@ -71,6 +71,7 @@ export default function ServiceCrud() {
 
 
   const handleDeleteType = async (id: string) => {
+
     if (!window.confirm('Are you sure you want to delete?')) return;
     try {
       await fetch('/api/service', {
@@ -98,7 +99,6 @@ export default function ServiceCrud() {
       });
 
       if (!response.ok) {
-        // 🔑 Ensure a structured error is thrown for UserModal to catch and display
         const errorData = await response.json();
         throw new Error(JSON.stringify({ 
             status: response.status, 
@@ -108,7 +108,7 @@ export default function ServiceCrud() {
 
     } catch (error) {
       console.error(error);
-      throw error; // Re-throw for UserModal to catch and display validation errors
+      throw error; 
     }
   };
 
@@ -153,7 +153,7 @@ export default function ServiceCrud() {
   return (
     <main className="container mx-auto p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Service</h1>
+        <h1 className="text-2xl font-bold">Our Service</h1>
         <button className="btn btn-secondary btn-sm" onClick={() => openModal()}> 
           <Icon icon="ic:baseline-add-comment" width="20" height="20" /> Add New Service 
         </button>
