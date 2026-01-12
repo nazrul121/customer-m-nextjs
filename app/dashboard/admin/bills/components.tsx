@@ -189,7 +189,6 @@ export default function BillCrud() {
         </div>
       </div>
 
-      <div className="bg-base-100 rounded-2xl border border-base-200 shadow-sm overflow-hidden">
         <DataTable 
           data={customerServices} 
           columns={columns} 
@@ -203,7 +202,6 @@ export default function BillCrud() {
           globalFilter={globalFilter}
           onGlobalFilterChange={setGlobalFilter}
         />
-      </div>
 
       <Modal id="bill-modal" isOpen={isModalOpen} onClose={closeModal}  title="Collect Payment">
         {isModalOpen && currentService && (

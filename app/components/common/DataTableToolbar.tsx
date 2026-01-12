@@ -4,6 +4,16 @@ import { useState, useEffect } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Search, Loader2, ChevronDown, X } from 'lucide-react';
 
+// 1. ADD THIS INTERFACE TO FIX THE TS ERROR
+interface DataTableToolbarProps {
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  pageSize: number;
+  onPageSizeChange: (size: number) => void;
+  isFetching: boolean;
+  actionSlot?: React.ReactNode;
+}
+
 export function DataTableToolbar({
   searchTerm,
   onSearchChange,
@@ -30,9 +40,10 @@ export function DataTableToolbar({
         
         {/* LEFT: MINIMALIST SEARCH BAR */}
         <div className="relative w-full md:w-80 group">
-          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-base-content/30 group-focus-within:text-primary transition-colors">
+          {/* ICON FIX: Ensure z-10 and better color contrast */}
+          <div className="absolute inset-y-0 left-4 z-10 flex items-center pointer-events-none text-base-content/50 group-focus-within:text-primary transition-colors">
             {isFetching ? (
-              <Loader2 size={16} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin text-primary" />
             ) : (
               <Search size={16} />
             )}
@@ -40,13 +51,14 @@ export function DataTableToolbar({
           
           <input type="text" placeholder="Quick search..." value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="input w-full h-10 pl-10 pr-10 bg-base-100 border border-base-800 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all rounded-lg text-sm"
+            // BORDER FIX: Changed border-base-800 to border-base-300 for visibility
+            className="input w-full h-10 pl-11 pr-10 bg-base-100 border border-base-500 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all rounded-xl text-sm"
           />
 
           {value && !isFetching && (
             <button 
               onClick={handleClear}
-              className="absolute inset-y-0 right-3 flex items-center text-base-content/30 hover:text-error transition-colors"
+              className="absolute inset-y-0 right-3 z-10 flex items-center text-base-content/30 hover:text-error transition-colors"
             >
               <X size={14} />
             </button>
@@ -55,12 +67,13 @@ export function DataTableToolbar({
 
         {/* RIGHT: COMPACT SELECT & ACTIONS */}
         <div className="flex items-center gap-4 w-full md:w-auto justify-end">
-          
           <div className="flex items-center gap-3">
-            <label className="text-[10px] border-base-800 font-bold uppercase tracking-widest opacity-40">Rows</label>
+            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">Rows</label>
             <div className="relative">
-              <select className="select select-bordered select-sm h-10 pl-3 pr-8 bg-base-100 border border-base-300 font-semibold focus:outline-none focus:border-primary rounded-lg appearance-none text-xs"
-                value={pageSize} onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              <select 
+                className="select select-bordered select-sm h-10 pl-3 pr-8 bg-base-100 border border-base-300 font-bold focus:outline-none focus:border-primary rounded-xl appearance-none text-xs"
+                value={pageSize} 
+                onChange={(e) => onPageSizeChange(Number(e.target.value))}
                 disabled={isFetching}
               >
                 {[10, 25, 50, 100].map((size) => (
@@ -74,12 +87,12 @@ export function DataTableToolbar({
           </div>
 
           {actionSlot && (
-            <>
+            <div className="flex items-center gap-4">
               <div className="h-6 w-px bg-base-300 hidden md:block"></div>
               <div className="shrink-0">
                 {actionSlot}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>

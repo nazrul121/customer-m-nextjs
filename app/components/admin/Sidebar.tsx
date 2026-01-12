@@ -45,7 +45,7 @@ export default function Sidebar() {
 
       {menuItems.map((section) => (
         <React.Fragment key={section.group}>
-          <li className="menu-title opacity-40 uppercase text-[10px] font-bold tracking-widest mt-6 mb-1">
+          <li className="menu-title opacity-70 uppercase text-[10px] font-bold tracking-widest mt-6 mb-1">
             {section.group}
           </li>
           
