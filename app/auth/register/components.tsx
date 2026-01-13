@@ -59,6 +59,7 @@ export default function RegisterContents() {
         email: formData.email,
         password: formData.password,
         name: formData.name,
+        phoneNumber:formData.phone,
         callbackURL: "/auth/register",
       });
 
@@ -66,7 +67,7 @@ export default function RegisterContents() {
         toast.error(error.message || "Failed to create account");
         setErrorMessage(error.message || "Failed to create account");
       } else {
-        toast.success("Welcome "+formData.name+"! Account created.");
+        toast.success("Welcome "+formData.name+"! Account created. Please wait for confirmation");
         router.push("/auth/login");
       }
     } catch (err) {
@@ -164,7 +165,7 @@ export default function RegisterContents() {
         </div>
 
         <button onClick={handleSignUp} disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold hover:bg-gray-500 hover:text- transition disabled:bg-gray-400 active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold btn btn-dash hover:text- transition disabled:bg-gray-400 active:scale-[0.98]"
         >
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin" />

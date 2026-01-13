@@ -38,12 +38,11 @@ export const FormPage: React.FC<FormPageProps> = ({ currentCustomerService, cust
     mode: 'onChange',
     defaultValues: { 
       customerId: customer.id,
-      serviceId: '',
-      isRepeat: 'NO',
-      initCost: 0,
-      mmc: 0,
-      initCostDis: 0,
-      mmcDis: 0,
+      serviceId: currentCustomerService?.serviceId,
+      initCost: currentCustomerService?.initCost,
+      mmc: currentCustomerService?.mmc,
+      initCostDis:currentCustomerService?.initCostDis,
+      mmcDis: currentCustomerService?.mmcDis,
     },
   });
 
@@ -117,46 +116,46 @@ useEffect(() => {
 
   // 7. Submit Handler
   const handleFormSubmit: SubmitHandler<CustomerServiceForm> = async (formData) => {
-  try {
-    // 1. Validate and Coerce (String -> Number/Date)
-    const validatedData = CustomerServiceSchema.parse(formData);
+    try {
+      // 1. Validate and Coerce (String -> Number/Date)
+      const validatedData = CustomerServiceSchema.parse(formData);
 
-    // 2. Prepare Payload
-    const payload = currentCustomerService 
-      ? { ...validatedData, id: currentCustomerService.id } 
-      : validatedData;
+      // 2. Prepare Payload
+      const payload = currentCustomerService 
+        ? { ...validatedData, id: currentCustomerService.id } 
+        : validatedData;
 
-    // 3. API Call (Assume this is your logic inside the onSubmit prop or direct fetch)
-    const method = currentCustomerService ? 'PUT' : 'POST';
-    const response = await fetch(`/api/customer/${customer.id}/services`, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+      // 3. API Call (Assume this is your logic inside the onSubmit prop or direct fetch)
+      const method = currentCustomerService ? 'PUT' : 'POST';
+      const response = await fetch(`/api/customer/${customer.id}/services`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (!response.ok) {
-      // 4. Handle Conflict (Duplicate Service for this Customer)
-      if (response.status === 409) {
-        // We set the error on 'serviceId' since that is the conflicting choice
-        setError("serviceId", { 
-          type: "manual", 
-          message: result.message || "This customer is already subscribed to this service." 
-        });
-        return;
+      if (!response.ok) {
+        // 4. Handle Conflict (Duplicate Service for this Customer)
+        if (response.status === 409) {
+          // We set the error on 'serviceId' since that is the conflicting choice
+          setError("serviceId", { 
+            type: "manual", 
+            message: result.message || "This customer is already subscribed to this service." 
+          });
+          return;
+        }
+        throw new Error(result.message || 'Failed to save Subscription');
       }
-      throw new Error(result.message || 'Failed to save Subscription');
-    }
 
-    onSuccess();
-    toast.success(currentCustomerService ? "Updated successfully" : "Assigned successfully");
-    
-  } catch (error: any) {
-    console.error(error);
-    toast.error(error.message || "Save failed");
-  }
-};
+      onSuccess();
+      toast.success(currentCustomerService ? "Updated successfully" : "Assigned successfully");
+      
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Save failed");
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5 p-2 relative"> 

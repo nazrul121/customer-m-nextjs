@@ -6,13 +6,14 @@ import { DataTable } from '@/app/components/common/DataTable';
 import { formatHumanReadableDate } from '@/lib/utils';
 import { Modal } from '@/app/components/common/Modal';
 import Link from 'next/link';
-import { ArrowLeft, PlusCircle, User } from 'lucide-react';
+import { ArrowLeft, Delete, DeleteIcon, DollarSign, Edit2, PlusCircle, User } from 'lucide-react';
 import { CustomerService } from '@/types/customerService';
 import { toast } from 'react-toastify';
 import { CustomerServiceForm } from '@/lib/schemas';
 import { FormPage } from './form';
 import { Customer } from '@/types/customer';
 import Image from 'next/image';
+import { PaySetupBill } from './payNow';
 
 interface ClientProps {
   customer: Customer;
@@ -75,11 +76,13 @@ export default function CustomerServicesClient({ customer }: ClientProps) {
         body: JSON.stringify({ id }),
       });
       if (!response.ok) throw new Error('Delete failed');
+
+      const data = await response.json();
       queryClient.invalidateQueries({ queryKey: ['customer-services'] }); 
-      toast.error("Service removed successfully!");
+      toast.info(data.message);
     } catch (error) {
       console.error(error);
-      toast.error("Delete failed");
+      toast.error("Delete failed. erro:"+error);
     }
   };
 
@@ -96,6 +99,25 @@ export default function CustomerServicesClient({ customer }: ClientProps) {
       throw new Error(errorData.message || 'Operation failed');
     }
   };
+
+
+  //for payment details 
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const openPaymentModal = (service: CustomerService | null = null) => {
+    setCurrentCustomerService(service);
+    setIsPaymentModalOpen(true);
+  };
+
+  const closePaymentModal = () => {
+    setIsPaymentModalOpen(false);
+    setCurrentCustomerService(null);
+  };
+
+  const paymentSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['customer-services'] }); 
+    closePaymentModal();
+  };
+
 
   // 4. Columns
   const columnHelper = createColumnHelper<CustomerService>();
@@ -177,26 +199,37 @@ export default function CustomerServicesClient({ customer }: ClientProps) {
     // 5. Actions
     columnHelper.display({
       id: 'actions',
-      header: () => <div className="text-right">Actions</div>,
-      cell: (props) => (
-        <div className="flex items-center justify-end gap-1">
-          <button 
-            onClick={() => openModal(props.row.original)} 
-            className="btn btn-ghost btn-xs text-info hover:bg-info/10"
-            title="Edit Subscription"
-          >
-            Edit
-          </button>
-          <div className="divider divider-horizontal m-0 h-4 self-center opacity-20"></div>
-          <button 
-            onClick={() => handleDelete(props.row.original.id)} 
-            className="btn btn-ghost btn-xs text-error hover:bg-error/10"
-            title="Delete Record"
-          >
-            Delete
-          </button>
-        </div>
-      ),
+      header: () => <div className="float-right">Actions</div>,
+      cell: (props) => {
+        const row = props.row.original;
+
+        // Calculate total paid for this specific row
+        const totalPaid = row.setupBills?.reduce((sum, bill) => sum + (Number(bill.paidAmount) || 0), 0) || 0;
+        const isFullyPaid = totalPaid >= Number(row.initCost);
+
+        return (
+          <div className="flex items-center justify-end gap-1">
+            {/* Payment Button: Disabled if fully paid */}
+            <div className="tooltip tooltip-left" data-tip={isFullyPaid ? "Payment Complete" : "Pay Setup Fee"}>
+              <button onClick={() => openPaymentModal(row)} 
+                className={`btn btn-xs btn-ghost text-success opacity-50}`}>
+                <DollarSign size={16} />
+              </button>
+            </div>
+
+            {/* Edit Button */}
+            <button onClick={() => openModal(row)} className="btn btn-primary btn-xs tooltip" data-tip="Edit Subscription"> 
+              <Edit2 size={16} />
+            </button>
+
+            {/* Delete Button */}
+            <button onClick={() => handleDelete(row.id)} data-tip="Delete Subscription"
+              className="btn btn-ghost btn-xs text-error tooltip tooltip-left">
+              <DeleteIcon size={18} />
+            </button>
+          </div>
+        );
+      },
     })
   ];
 
@@ -229,29 +262,21 @@ export default function CustomerServicesClient({ customer }: ClientProps) {
         </button>
       </div>
 
-      <DataTable 
-        data={customer_services} 
-        columns={columns} 
-        totalCount={totalCount} 
-        isLoading={isLoading} 
-        isFetching={isFetching} 
-        pagination={pagination}
-        onPaginationChange={setPagination} 
-        sorting={sorting} 
-        onSortingChange={setSorting}
-        globalFilter={globalFilter}
-        onGlobalFilterChange={setGlobalFilter} 
+      <DataTable data={customer_services} columns={columns} totalCount={totalCount} 
+        isLoading={isLoading} isFetching={isFetching} pagination={pagination}
+        onPaginationChange={setPagination} sorting={sorting} 
+        onSortingChange={setSorting} globalFilter={globalFilter} onGlobalFilterChange={setGlobalFilter} 
       />
 
-      <Modal id="service-modal" isOpen={isModalOpen} onClose={closeModal} title={currentCustomerService ? 'Edit Service' : 'Subscription for '+customer.name}>
-        <FormPage 
-            currentCustomerService={currentCustomerService} 
-            onSubmit={onSubmit} 
-            customer={customer}
-            onCancel={closeModal} 
-            onSuccess={handleSuccess} 
+      <Modal id="service-modal" isOpen={isModalOpen} onClose={closeModal} title={currentCustomerService ? 'Edit Subscription for '+currentCustomerService.service?.name : 'New Subscription for '+customer.name}>
+        <FormPage currentCustomerService={currentCustomerService} 
+            onSubmit={onSubmit} customer={customer} onCancel={closeModal} onSuccess={handleSuccess} 
         />
       </Modal> 
+
+      <Modal id="payment-modal" isOpen={isPaymentModalOpen} onClose={closePaymentModal} title={'Subscription fee'}>
+        <PaySetupBill currentCustomerService={currentCustomerService} onCancel={closePaymentModal} onSuccess={paymentSuccess} currentSetupBill={null} />
+      </Modal>
     </main>
   );
 }

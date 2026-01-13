@@ -104,10 +104,7 @@ export default function AccountComponents() {
                         <p className="text-sm opacity-70 mb-6"> 
                             Access your dedicated tools and management console.
                         </p>
-                        <button 
-                            onClick={() => router.push(workspaceRoute)}
-                            className="btn btn-primary btn-block shadow-lg rounded-xl h-12"
-                        >
+                        <button onClick={() => router.push(workspaceRoute)} className="btn btn-primary btn-block shadow-lg rounded-xl h-12">
                             Enter Workspace
                         </button>
                     </div>

@@ -36,7 +36,7 @@ export default function DashboardLayout({
       </div>
 
       {/* Sidebar */}
-      <div className="drawer-side z-40">
+      <div className="drawer-side z-40 overflow-visible">
         <label htmlFor="admin-drawer" className="drawer-overlay" />
         <SideBar collapsed={collapsed} />
       </div>

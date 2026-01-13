@@ -102,12 +102,10 @@ export function DataTable<TData extends { id: string | number }, TValue>({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id} className="border-b border-base-300">
                     {headerGroup.headers.map((header) => (
-                      <th 
-                        key={header.id} 
-                        className={`py-4 font-bold text-xs uppercase tracking-wider transition-colors
+                      <th key={header.id} className={`py-4 font-bold text-xs uppercase tracking-wider transition-colors
                           ${header.column.getCanSort() ? 'cursor-pointer select-none hover:bg-base-300' : ''}`}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
+
+                        onClick={header.column.getToggleSortingHandler()} >
                         <div className="flex items-center gap-2">
                           <span>
                             {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}

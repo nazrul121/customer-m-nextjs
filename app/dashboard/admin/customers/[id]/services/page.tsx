@@ -2,8 +2,6 @@ import prisma from '@/lib/prisma';
 import { Metadata } from 'next';
 import CustomerServicesClient from './components'; // Adjust path if needed
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -16,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     select: { name: true, customerCode: true }
   });
   if (!customer) return { title: 'Customer Not Found' };
-  return { title: `Services - ${customer.name}` };
+  return { title: `Customer Services - ${customer.name}` };
 }
 
 export default async function CustomerServicesPage({ params }: Props) {

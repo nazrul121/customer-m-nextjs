@@ -85,7 +85,6 @@ export type CustomerServiceForm = z.input<typeof CustomerServiceSchema>;
 export type CustomerServiceOutput = z.output<typeof CustomerServiceSchema>;
 
 
-
 export const settingSchema = z.object({
   key: z.string().min(1, "Key is required"),
   value: z.string().min(1, "Value is required"),
@@ -101,3 +100,15 @@ export const MonthlyBillSchema = z.object({
 });
 
 export type MonthlyBillForm = z.infer<typeof MonthlyBillSchema>;
+
+
+			
+export const SetupBillSchema = z.object({
+  customerServiceId: z.string().min(1, "Customer Service ID is required"),
+  paidAmount: z.coerce.number().min(0),
+  paidDate: z.coerce.date(), // <--- Critical for handling strings from inputs
+  receivedB: z.string().min(1, "Receiver name is required"),
+});
+
+export type SetupBillForm = z.infer<typeof SetupBillSchema>;
+

@@ -174,6 +174,11 @@ export default function LoginContents() {
           </button>
         </form>
 
+        <p className="text-center text-sm mt-10">
+          Don`t` have an account?{" "}
+          <Link href="/auth/register" className="font-bold hover:underline decoration-2"> Sign Up </Link>
+        </p>
+
       </div>
     </div>
   );

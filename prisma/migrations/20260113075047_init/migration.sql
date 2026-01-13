@@ -146,6 +146,36 @@ CREATE TABLE `MonthlyBill` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `SetupBill` (
+    `id` VARCHAR(191) NOT NULL,
+    `customerServiceId` VARCHAR(191) NOT NULL,
+    `paidAmount` DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    `paidDate` DATE NULL,
+    `receivedBy` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    INDEX `SetupBill_customerServiceId_idx`(`customerServiceId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `GeneralLedger` (
+    `id` VARCHAR(191) NOT NULL,
+    `customerServiceId` VARCHAR(191) NOT NULL,
+    `purpose` ENUM('MonthlyBill', 'SetupBill') NOT NULL,
+    `voucherNo` VARCHAR(191) NOT NULL,
+    `paidAmount` DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    `paidDate` DATE NULL,
+    `receivedBy` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    INDEX `GeneralLedger_customerServiceId_idx`(`customerServiceId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `session` ADD CONSTRAINT `session_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -163,3 +193,9 @@ ALTER TABLE `CustomerService` ADD CONSTRAINT `CustomerService_serviceId_fkey` FO
 
 -- AddForeignKey
 ALTER TABLE `MonthlyBill` ADD CONSTRAINT `MonthlyBill_customerServiceId_fkey` FOREIGN KEY (`customerServiceId`) REFERENCES `CustomerService`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SetupBill` ADD CONSTRAINT `SetupBill_customerServiceId_fkey` FOREIGN KEY (`customerServiceId`) REFERENCES `CustomerService`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `GeneralLedger` ADD CONSTRAINT `GeneralLedger_customerServiceId_fkey` FOREIGN KEY (`customerServiceId`) REFERENCES `CustomerService`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

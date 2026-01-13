@@ -1,7 +1,6 @@
-
 import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import "./globals.css";
-import { ToastContainer } from 'react-toastify';
+import ToastProvider from "@/providers/ToastProvider"; // We will create this below
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +11,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `
               (function() {
                 try {
-                  // Change 'wireframe' to 'night' here 👇
                   const savedTheme = localStorage.getItem('app-theme') || 'night';
                   document.documentElement.setAttribute('data-theme', savedTheme);
                 } catch (e) {}
@@ -22,8 +20,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>  
-        <ToastContainer />
         <ReactQueryProvider>
+          {/* We move Toast logic to a Client Component */}
+          <ToastProvider /> 
           {children}
         </ReactQueryProvider>
       </body>

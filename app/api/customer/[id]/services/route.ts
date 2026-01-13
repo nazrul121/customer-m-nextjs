@@ -35,9 +35,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                         include: {
                             serviceType: true
                         }
-                    }
+                    },
+                    setupBills: true,
                 },
                 orderBy: orderBy // 👈 Use the fixed orderBy
+                
             }),
             prisma.customerService.count({ where: { customerId: id } }),
         ]);
@@ -193,13 +195,13 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
     try {
         const { id } = await request.json();
-        const customer = await prisma.customer.findUnique({ where: { id } });
+        const customerService = await prisma.customerService.findUnique({ where: { id } });
 
-        if (customer) {
-            await prisma.customer.delete({ where: { id } });
+        if (customerService) {
+            await prisma.customerService.delete({ where: { id } });
         }
 
-        return NextResponse.json({ message: 'Customer and files deleted successfully' });
+        return NextResponse.json({ message: 'Customer subscription deleted successfully' });
     } catch (error) {
         return NextResponse.json({ message: 'Delete failed' }, { status: 500 });
     }

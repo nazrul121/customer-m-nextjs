@@ -151,6 +151,8 @@ model CustomerService {
   isRepeat   YesNo    @default(NO)
 
   bills MonthlyBill[]
+  setupBills SetupBill[]
+  generalLedgers GeneralLedger[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,6 +160,7 @@ model CustomerService {
   @@index([customerId])
   @@index([serviceId])
   @@unique([customerId, serviceId])
+
 }
 
 model MonthlyBill {
@@ -178,6 +181,41 @@ model MonthlyBill {
   @@index([customerServiceId])
 }
 
+model SetupBill {
+  id String @id @default(cuid())
+
+  customerServiceId String
+  customerService   CustomerService @relation(fields: [customerServiceId], references: [id], onDelete: Cascade)
+
+  paidAmount Decimal   @default(0) @db.Decimal(10, 2)
+  paidDate   DateTime? @db.Date
+  receivedBy String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerServiceId])
+}
+
+model GeneralLedger {
+  id String @id @default(cuid())
+
+  customerServiceId String
+  customerService   CustomerService @relation(fields: [customerServiceId], references: [id], onDelete: Cascade)
+
+  purpose  PaymentFor 
+  voucherNo   String
+ 
+  paidAmount Decimal   @default(0) @db.Decimal(10, 2)
+  paidDate   DateTime? @db.Date
+  receivedBy String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerServiceId])
+}
+
 enum Status {
   INACTIVE
   ACTIVE
@@ -186,4 +224,9 @@ enum Status {
 enum YesNo {
   NO
   YES
+}
+
+enum PaymentFor {
+  MonthlyBill
+  SetupBill
 }
