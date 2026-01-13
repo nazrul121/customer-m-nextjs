@@ -4,7 +4,6 @@ import { userSchema } from '@/lib/schemas'
 import { Prisma } from '@/generated/prisma/client' 
 import prisma from '@/lib/prisma';
 import { phoneNumber } from 'better-auth/plugins';
-import { signUp } from "@/lib/auth-client";
 import { auth } from "@/lib/auth";
 
 // --- GET (Read All Users) ---

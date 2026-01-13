@@ -10,6 +10,8 @@ import {
   Zap,
   Wallet,
   UserCog,
+  PanelBottom,
+  CalendarCheck,
 } from "lucide-react";
 
 type SidebarProps = {
@@ -20,7 +22,7 @@ const menuItems = [
   {
     group: "General",
     items: [
-      // { name: "Overview", href: "/dashboard", icon: <PanelBottom size={20} /> },
+      { name: "Overview", href: "/dashboard", icon: <PanelBottom size={20} /> },
       {
         name: "Dashboard",
         href: "/dashboard/admin",
@@ -54,6 +56,11 @@ const menuItems = [
       {
         name: "Monthly Bills",
         href: "/dashboard/admin/bills",
+        icon: <CalendarCheck size={20} />,
+      },
+      {
+        name: "General Ledger",
+        href: "/dashboard/admin/gl",
         icon: <Wallet size={20} />,
       },
     ],
@@ -74,7 +81,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <ul className={`overflow-x-visible menu min-h-full bg-base-100 border-r border-base-200 p-2 transition-all duration-300 ${collapsed ? "w-20" : "w-72"}`}>
+    <ul className={`menu min-h-full bg-base-100 border-r border-base-200 p-2 transition-all duration-300 ${collapsed ? "w-20" : "w-72"}`}>
       {/* Logo */}
       <li className="mb-8 px-2 flex justify-center lg:justify-start">
       <Link href="/" className="text-xl font-black text-primary tracking-tighter">
@@ -96,12 +103,15 @@ export default function Sidebar({ collapsed }: SidebarProps) {
 
             return (
               <li key={item.href}>
-                <Link href={item.href} className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all tooltip tooltip-${!collapsed?'top':'right'}`} data-tip={item.name}>
-                  <span className={`${isActive ? "text-accent" : "text-primary"}`}>
+                <Link href={item.href}
+                  className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all tooltip tooltip-top`}
+                  data-tip={item.name}
+                >
+                  <span className={isActive ? "text-primary-content" : "text-primary"}>
                     {item.icon}
                   </span>
 
-                  {!collapsed && <span className={`${isActive ? "text-accent" : "text-primary"}`}>{item.name}</span>}
+                  {!collapsed && <span>{item.name}</span>}
                 </Link>
               </li>
             );

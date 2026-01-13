@@ -56,7 +56,8 @@ export const PaySetupBill: React.FC<PayNowProps> = ({
     values: {
       customerServiceId: currentCustomerService?.id || "",
       paidAmount: 0, 
-      paidDate: (new Date().toISOString().split('T')[0]) as unknown as Date, 
+      // Just pass the string; Zod coerce will handle the conversion
+      paidDate: new Date().toISOString().split('T')[0] as any, 
       receivedB: session?.user?.name || "",
     },
   });

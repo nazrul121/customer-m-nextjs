@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { MonthlyBillSchema } from '@/lib/schemas';
-
+import {generateVoucherNo}  from "@/lib/utils";
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
 
 export async function GET(request: Request) {
     try {
@@ -73,69 +75,85 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+
+        if (!session) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await request.json();
         const validated = MonthlyBillSchema.parse(body);
 
-        // 1. Fetch the CustomerService to get the MMC and existing payments for that month
-        const service = await prisma.customerService.findUnique({
-            where: { id: validated.customerServiceId },
-            include: {
-                bills: {
-                    where: { monthFor: validated.monthFor }
-                }
-            }
-        });
-
-        if (!service) {
-            return NextResponse.json({ message: "Service not found" }, { status: 404 });
-        }
-
-        // 2. Calculate current status for the specific month in the form
-        const totalPaidSoFar = service.bills.reduce((sum, b) => sum + Number(b.paidAmount), 0);
-        const mmc = Number(service.mmc);
-        const remainingDue = mmc - totalPaidSoFar;
-
-        // 3. Validation Logic
-        if (remainingDue <= 0) {
-            // 1. Create a date object from the "YYYY-MM" string
-            const dateObj = new Date(`${validated.monthFor}-01`);
+        // Execute everything in a transaction for data integrity
+        const result = await prisma.$transaction(async (tx) => {
             
-            // 2. Format it to "Month Year" (e.g., February 2026)
-            const formattedDate = dateObj.toLocaleString('en-US', { 
-                month: 'long', 
-                year: 'numeric' 
+            // 1. Fetch data using 'tx' to lock the record (concurrency safety)
+            const service = await tx.customerService.findUnique({
+                where: { id: validated.customerServiceId },
+                include: {
+                    bills: {
+                        where: { monthFor: validated.monthFor }
+                    }
+                }
             });
 
-            console.log(`${formattedDate} is already fully paid.`);
+            if (!service) throw new Error("Service not found");
 
-            return NextResponse.json(
-                { message: `${formattedDate} is already fully paid.` }, 
-                { status: 400 }
-            );
-        }
+            // 2. Logic Check
+            const totalPaidSoFar = service.bills.reduce((sum, b) => sum + Number(b.paidAmount), 0);
+            const mmc = Number(service.mmc);
+            const remainingDue = mmc - totalPaidSoFar;
 
-        if (validated.paidAmount > remainingDue) {
-            return NextResponse.json(
-                { message: `Payment exceeds remaining due for ${validated.monthFor}. Max allowed: ${remainingDue}` }, 
-                { status: 400 }
-            );
-        }
-
-        // 4. If validation passes, create the payment record
-        const payment = await prisma.monthlyBill.create({
-            data: {
-                customerServiceId: validated.customerServiceId,
-                monthFor: validated.monthFor,
-                mmc: validated.mmc,
-                paidAmount: validated.paidAmount,
-                paidDate: validated.paidDate,
-                receivedBy: body.receivedBy || "Admin",
+            if (remainingDue <= 0) {
+                const dateObj = new Date(`${validated.monthFor}-01`);
+                const formattedDate = dateObj.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                throw new Error(`${formattedDate} is already fully paid.`);
             }
+
+            if (validated.paidAmount > remainingDue) {
+                throw new Error(`Payment exceeds remaining due. Max allowed: ${remainingDue}`);
+            }
+
+            // 3. Generate Voucher (using tx)
+            const voucherNo = await generateVoucherNo(tx);
+
+            // 4. Create Payment (Using 'tx', NOT 'prisma')
+            const payment = await tx.monthlyBill.create({
+                data: {
+                    customerServiceId: validated.customerServiceId,
+                    monthFor: validated.monthFor,
+                    mmc: validated.mmc,
+                    paidAmount: validated.paidAmount,
+                    paidDate: validated.paidDate,
+                    receivedBy: session.user.name, // Use session name
+                }
+            });
+
+            // 5. Create General Ledger (Using 'tx')
+            await tx.generalLedger.create({
+                data: {
+                    purpose: 'MonthlyBill',
+                    receivedBy: session.user.name,
+                    voucherNo: voucherNo,
+                    customerServiceId: validated.customerServiceId,
+                    paidAmount: validated.paidAmount,
+                    paidDate: validated.paidDate,
+                }
+            });
+
+            return payment; // 🔑 Return this so it's assigned to 'result'
         });
 
-        return NextResponse.json(payment);
+        return NextResponse.json({
+            message: 'Payment recorded successfully',
+            data: result
+        }, { status: 201 });
+
     } catch (error: any) {
         console.error("Payment Error:", error);
-        return NextResponse.json({ message: error.message }, { status: 400 });
+        // Better-Auth and Prisma errors usually have a message property
+        return NextResponse.json({ message: error.message || "Internal Server Error" }, { status: 400 });
     }
 }

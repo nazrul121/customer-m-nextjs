@@ -104,11 +104,12 @@ export type MonthlyBillForm = z.infer<typeof MonthlyBillSchema>;
 
 			
 export const SetupBillSchema = z.object({
-  customerServiceId: z.string().min(1, "Customer Service ID is required"),
-  paidAmount: z.coerce.number().min(0),
-  paidDate: z.coerce.date(), // <--- Critical for handling strings from inputs
-  receivedB: z.string().min(1, "Receiver name is required"),
+  customerServiceId: z.string().min(1, "Required"),
+  // 🔑 Use coerce to turn string input into a number
+  paidAmount: z.coerce.number().min(0, "Amount must be positive"),
+  // 🔑 Use coerce to turn string date into a Date object
+  paidDate: z.coerce.date(),
+  receivedB: z.string().min(1, "Required"),
 });
-
-export type SetupBillForm = z.infer<typeof SetupBillSchema>;
+export type SetupBillForm = z.input<typeof SetupBillSchema>;
 

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { SetupBillSchema } from '@/lib/schemas';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import {generateVoucherNo}  from "@/lib/utils";
+
 
 export async function GET(
   req: Request,
@@ -47,16 +51,22 @@ export async function GET(
 }
 
 
-
 // --- POST (Create) ---
 export async function POST(request: Request) {
     try {
-        // 1. Parse JSON body (matching your frontend fetch call)
+        // 1. Get current session for 'receivedBy'
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+
+        if (!session) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await request.json();
 
         // 2. Validate with Zod
         const validation = SetupBillSchema.safeParse(body);
-        
         if (!validation.success) {
             return NextResponse.json({ 
                 message: 'Validation failed', 
@@ -65,20 +75,42 @@ export async function POST(request: Request) {
         }
 
         const data = validation.data;
+        
+        // 3. Execute Database Transaction
+        const result = await prisma.$transaction(async (tx) => {
+            // A. Generate unique voucher number
+            const voucherNo = await generateVoucherNo(tx);
 
-        // 4. Create the new record
-        const newSetupBill = await prisma.setupBill.create({
-            data: {
-                customerServiceId: data.customerServiceId,
-                paidAmount:data.paidAmount,
-                paidDate:data.paidDate,
-                receivedBy:data.receivedB
-            }
+            console.log('voucherNo: '+voucherNo);
+            
+            // B. Create SetupBill
+            const newSetupBill = await tx.setupBill.create({
+                data: {
+                    customerServiceId: data.customerServiceId,
+                    paidAmount: data.paidAmount,
+                    paidDate: data.paidDate,
+                    receivedBy: session.user.name // Use actual login name
+                }
+            });
+
+            // C. Create General Ledger entry
+            const gl = await tx.generalLedger.create({
+                data: {
+                    purpose: 'SetupBill',
+                    receivedBy: session.user.name,
+                    voucherNo: voucherNo,
+                    customerServiceId: data.customerServiceId,
+                    paidAmount: data.paidAmount,
+                    paidDate: data.paidDate,
+                }
+            });
+
+            return newSetupBill;
         });
 
         return NextResponse.json({
             message: 'Subscription created successfully',
-            data: newSetupBill
+            data: result
         }, { status: 201 });
 
     } catch (error: any) {
@@ -88,7 +120,6 @@ export async function POST(request: Request) {
         }, { status: 500 });
     }
 }
-
 
 
 // --- DELETE ---
