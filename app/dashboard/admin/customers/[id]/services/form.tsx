@@ -20,7 +20,7 @@ interface FormPageProps {
 }
 
 export const FormPage: React.FC<FormPageProps> = ({ currentCustomerService, customer, onCancel,onSuccess, onSubmit }) => {
-  
+
   const { data: servicesData, isLoading: servicesLoading } = useQuery({
     queryKey: ['services-list'],
     queryFn: async () => {
@@ -43,6 +43,7 @@ export const FormPage: React.FC<FormPageProps> = ({ currentCustomerService, cust
       mmc: currentCustomerService?.mmc,
       initCostDis:currentCustomerService?.initCostDis,
       mmcDis: currentCustomerService?.mmcDis,
+      initPayment:0,
     },
   });
 
@@ -110,6 +111,7 @@ useEffect(() => {
         mmcDis: 0,
         startDate: '', // Or new Date().toISOString().split('T')[0] for today
         expiryDate: '',
+        aggreDate:new Date().toISOString().split('T')[0],
       });
     }
   }, [currentCustomerService, reset]);
@@ -183,7 +185,7 @@ useEffect(() => {
       </div>
 
       {/* Financial Section */}
-      <div className="bg-base-200/50 p-4 rounded-xl space-y-4 border border-base-300">
+      <div className="bg-base-200/50 rounded-xl space-y-4 border border-base-300">
         <div className="flex items-center gap-2 mb-2">
             <DollarSign size={14} className="text-primary" />
             <span className="text-[10px] uppercase font-bold tracking-widest text-primary">Pricing & Discounts</span>
@@ -216,13 +218,26 @@ useEffect(() => {
 
       {/* Date Section */}
       <div className="grid grid-cols-2 gap-4">
+        
         <div className="form-control">
-          <label className="label-text font-bold mb-1 text-xs uppercase tracking-wider">Start Date</label>
+          <label className="label-text font-bold mb-1 text-xs tracking-wider">Aggrement Date</label>
+          <input type="date" {...register('aggreDate')} className="input input-bordered input-sm" />
+          {errors.aggreDate && <span className="text-error text-[10px] mt-1">{errors.aggreDate.message as string}</span>}
+        </div>
+
+        <div className="form-control">
+          <label className="label-text font-bold mb-1 text-xs tracking-wider">Initial Payment</label>
+          <input type="number" {...register('initPayment')} className="input input-bordered input-sm" />
+          {errors.initPayment && <span className="text-error text-[10px] mt-1">{errors.initPayment.message as string}</span>}
+        </div>
+
+        <div className="form-control">
+          <label className="label-text font-bold mb-1 text-xs tracking-wider">Start Date</label>
           <input type="date" {...register('startDate')} className="input input-bordered input-sm" />
           {errors.startDate && <span className="text-error text-[10px] mt-1">{errors.startDate.message as string}</span>}
         </div>
         <div className="form-control">
-          <label className="label-text font-bold mb-1 text-xs uppercase tracking-wider">Expiry Date</label>
+          <label className="label-text font-bold mb-1 text-xs tracking-wider">Expiry Date</label>
           <input type="date" {...register('expiryDate')} className="input input-bordered input-sm" />
           {errors.expiryDate && <span className="text-error text-[10px] mt-1">{errors.expiryDate.message as string}</span>}
         </div>

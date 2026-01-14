@@ -1,4 +1,4 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, boolean } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { phoneNumber } from "better-auth/plugins";
 // If your Prisma file is located elsewhere, you can change the path
@@ -26,6 +26,9 @@ export const auth = betterAuth({
                 defaultValue: "user", // Matches your Prisma default
                 input: false, // Important: prevents users from setting their own role during signup
             },
+            status: {
+                type: 'boolean'
+            }
         },
     },
     plugins: [

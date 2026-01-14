@@ -3,14 +3,11 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query'; 
 import { createColumnHelper, SortingState, PaginationState } from '@tanstack/react-table';
 // Logic/Types
-
-import { ServiceForm } from '@/lib/schemas';
 import { formatHumanReadableDate } from '@/lib/utils'; 
-
-import { toast } from 'react-toastify';
-import { Icon } from '@iconify/react';
 import { DataTable } from '@/app/components/common/DataTable';
-import { GL } from '@/types/GL';
+import { GLSummary } from '@/types/GL';
+import { Eye } from 'lucide-react';
+import Link from 'next/link';
 
 
 export default function GLCrud() {
@@ -48,78 +45,65 @@ export default function GLCrud() {
   const generalLedgers = data?.data || [];
   const totalCount = data?.meta?.totalCount || 0;
 
-
-
   // --- 4. Column Definitions ---
-  const columnHelper = createColumnHelper<GL>();
+  const columnHelper = createColumnHelper<GLSummary>();
 
   const columns = [
-    columnHelper.accessor('voucherNo', {
-      header: 'Voucher No',
-      cell: (info) => <span className="font-mono text-xs">{info.getValue()}</span>,
-    }),
-
-    columnHelper.accessor('paidDate', {
-      header: 'Date',
-      cell: (info) => formatHumanReadableDate(info.getValue()),
-    }),
-
-    // 1. Customer Column
-    columnHelper.display({
-      id: 'customer',
+    columnHelper.accessor('customerName', {
       header: 'Customer',
       cell: (info) => {
-        const customer = info.row.original.customerService?.customer;
+        // row.original gives us access to all fields in GLSummary, including phone
+        const phone = info.row.original.customerPhone;
         return (
-          <div className="flex flex-col">
-            <span className="font-bold">{customer?.name || "N/A"}</span>
-            <span className="text-xs opacity-60">{customer?.phone}</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-bold text-sm leading-tight">
+              {info.getValue()}
+            </span>
+            <span className="text-[11px] opacity-60 font-mono">
+              Cell: {phone || "No Phone"}
+            </span>
           </div>
         );
       },
     }),
+    columnHelper.accessor('serviceName', {
+      header: 'Service',
+      cell: (info) => <span>{info.getValue()} </span>
+    }),
 
+    columnHelper.accessor('totalBilled', {
+      header: 'Total Billed',
+      cell: (info) => <span>{info.getValue().toLocaleString()} BDT</span>
+    }),
 
-    // 2. Service & Type Column
-    columnHelper.display({
-      id: 'service',
-      header: 'Service Detail',
+    columnHelper.accessor('totalPaid', {
+      header: 'Total Paid',
+      cell: (info) => <span>{info.getValue().toLocaleString()} BDT</span>
+    }),
+
+    columnHelper.accessor('balance', {
+      header: 'Balance',
       cell: (info) => {
-        const cs = info.row.original.customerService;
-        const serviceName = cs?.service?.name;
-        const typeName = cs?.service?.serviceType?.name;
-        
         return (
-          <div className="flex flex-col">
-            <span>{serviceName || "N/A"}</span>
-            {typeName && (
-              <span className="badge badge-ghost badge-xs text-[10px]">
-                {typeName}
-              </span>
-            )}
-          </div>
-        );
-      },
+          <span className={info.getValue() > 0 ? "text-error font-bold" : "text-success"}>
+            {info.getValue().toLocaleString()}
+          </span>
+        )
+      }
     }),
 
-    columnHelper.accessor('paidAmount', {
-      header: 'Amount',
-      cell: (info) => (
-        <span className="font-semibold text-success">
-          {info.getValue()?.toLocaleString()} BDT
-        </span>
-      ),
-    }),
-
-    
-    columnHelper.accessor('purpose', {
-      header: 'Purpose',
-      cell: (info) => (
-        <div className="badge badge-outline badge-sm">
-          {info.getValue()}
-        </div>
-      ),
-    }),
+    columnHelper.display({
+      id: 'actions',
+      header: 'Actions',
+      cell: (info) => {
+        // console.log(info.row.original.customerServiceId);
+        return (
+          <Link href={`/dashboard/admin/gl/${info.row.original.id}`} className="btn btn-xs btn-outline btn-info">
+            View Vouchers ({info.row.original.ledgerCount})
+          </Link>
+        )
+      }
+    })
   ];
 
   return (

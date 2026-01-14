@@ -16,13 +16,9 @@ type FormErrors = {
 
 export default function RegisterContents() {
   const router = useRouter();
-  
-  // State
+ 
   const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    password: "",
+    name: "", phone: "", email: "", password: "",
   });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -51,27 +47,36 @@ export default function RegisterContents() {
 
   const handleSignUp = async () => {
     if (!validate()) return;
-
     setLoading(true);
-    setErrorMessage("");
+
     try {
+      // 1. Pre-check uniqueness 🔍
+      const checkRes = await fetch(`/api/users/check-unique?email=${formData.email}&phone=${formData.phone}`);
+      const { emailExists, phoneExists } = await checkRes.json();
+
+      if (emailExists || phoneExists) {
+        if (emailExists) setErrors(p => ({ ...p, email: "Email already taken" }));
+        if (phoneExists) setErrors(p => ({ ...p, phone: "Phone number already taken" }));
+        setLoading(false);
+        return; // Stop here
+      }
+
+      // 2. Proceed with actual Sign Up 🚀
       const { error } = await signUp.email({
         email: formData.email,
         password: formData.password,
         name: formData.name,
-        phoneNumber:formData.phone,
+        phoneNumber: formData.phone,
         callbackURL: "/auth/register",
       });
 
-      if (error) {
-        toast.error(error.message || "Failed to create account");
-        setErrorMessage(error.message || "Failed to create account");
-      } else {
-        toast.success("Welcome "+formData.name+"! Account created. Please wait for confirmation");
-        router.push("/auth/login");
-      }
-    } catch (err) {
-      setErrorMessage("A connection error occurred.");
+      if (error) throw error;
+
+      toast.success("Account created successfully! Please wait for further confirmation!");
+      router.push("/auth/login");
+
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to create account");
     } finally {
       setLoading(false);
     }
@@ -97,11 +102,7 @@ export default function RegisterContents() {
             <label className="text-sm font-medium">Full Name</label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4" />
-              <input
-                name="name"
-                placeholder="John Doe"
-                value={formData.name}
-                onChange={handleChange}
+              <input name="name" placeholder="e.g: Nazrul Islam" value={formData.name} onChange={handleChange}
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition ${
                   errors.name ? "border-red-500 ring-1 ring-red-500" : "focus:ring-2 focus:ring-black/5 border-gray-300"
                 }`}
@@ -130,11 +131,8 @@ export default function RegisterContents() {
             <label className="text-sm font-medium">Email Address</label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4" />
-              <input
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                value={formData.email}
+              <input name="email" type="email"
+                placeholder="you@example.com" value={formData.email}
                 onChange={handleChange}
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition ${
                   errors.email ? "border-red-500 ring-1 ring-red-500" : "focus:ring-2 focus:ring-black/5 border-gray-300"
@@ -149,12 +147,8 @@ export default function RegisterContents() {
             <label className="text-sm font-medium ">Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 " />
-              <input
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
+              <input name="password" type="password" placeholder="••••••••"
+                value={formData.password}onChange={handleChange}
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg outline-none transition ${
                   errors.password ? "border-red-500 ring-1 ring-red-500" : "focus:ring-2 focus:ring-black/5 border-gray-300"
                 }`}
@@ -165,23 +159,20 @@ export default function RegisterContents() {
         </div>
 
         <button onClick={handleSignUp} disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold btn btn-dash hover:text- transition disabled:bg-gray-400 active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold btn btn-dash hover:text- transition active:scale-[0.98]"
         >
           {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <><Loader2 className="h-5 w-5 animate-spin" />  Signing Up...</>
           ) : (
             <>
-              <UserPlus className="h-5 w-5" />
-              Sign Up
+              <UserPlus className="h-5 w-5" />  Sign Up
             </>
           )}
         </button>
 
         <p className="text-center text-sm">
           Already have an account?{" "}
-          <Link href="/auth/login" className="font-bold hover:underline decoration-2">
-            Log In
-          </Link>
+          <Link href="/auth/login" className="font-bold hover:underline decoration-2"> Log In </Link>
         </p>
       </div>
     </div>

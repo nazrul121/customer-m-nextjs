@@ -127,50 +127,61 @@ export async function POST(request: Request) {
 // --- PUT (Update an Existing User) ---
 export async function PUT(request: Request) {
   try {
-    const data = await request.json()
-    const { id, name, email, role } = data
+    const data = await request.json();
+    // 🔑 Added 'status' to destructuring
+    const { id, name, email, role, status } = data;
 
     if (!id || typeof id !== 'string') {
-        return NextResponse.json({ message: 'A valid User ID is required' }, { status: 400 })
+      return NextResponse.json({ message: 'A valid User ID is required' }, { status: 400 });
     }
 
-    // Partial validation for fields that are present
-    const updateData = userSchema.partial().safeParse({ name, email, role })
+    // 🔑 Include 'status' in validation
+    const updateData = userSchema.partial().safeParse({ name, email, role, status });
+    
     if (!updateData.success) {
-        return NextResponse.json(
-            { message: 'Validation failed', errors: updateData.error.flatten() },
-            { status: 400 }
-        )
+      return NextResponse.json(
+        { message: 'Validation failed', errors: updateData.error.flatten() },
+        { status: 400 }
+      );
     }
 
-    const validatedData = updateData.data as { name?: string, email?: string, role?: string };
+    // Data to be updated
+    const validatedData = updateData.data;
 
-    // Uniqueness Check on email change
+    // Uniqueness Check
     if (validatedData.email) {
-        const existingUser = await prisma.user.findUnique({
-            where: { email: validatedData.email },
-        })
+      const existingUser = await prisma.user.findUnique({
+        where: { email: validatedData.email },
+      });
 
-        if (existingUser && existingUser.id !== id) {
-            return NextResponse.json(
-                { message: `The email "${validatedData.email}" is already registered by another user.` },
-                { status: 409 }
-            )
-        }
+      if (existingUser && existingUser.id !== id) {
+        return NextResponse.json(
+          { message: `The email "${validatedData.email}" is already registered.` },
+          { status: 409 }
+        );
+      }
     }
     
     // Perform update
     const updatedUser = await prisma.user.update({
       where: { id: id },
-      data: validatedData,
+      data: {
+        name: validatedData.name,
+        email: validatedData.email,
+        role: validatedData.role,
+        phoneNumber: validatedData.phoneNumber,
+        status: validatedData.status as any, 
+      },
     })
-    return NextResponse.json(updatedUser, { status: 200 })
+
+    return NextResponse.json(updatedUser, { status: 200 });
+    
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        return NextResponse.json({ message: 'User not found.' }, { status: 404 });
+      return NextResponse.json({ message: 'User not found.' }, { status: 404 });
     }
-    console.error('Error updating user:', error)
-    return NextResponse.json({ message: 'Failed to update user' }, { status: 500 })
+    console.error('Error updating user:', error);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
 

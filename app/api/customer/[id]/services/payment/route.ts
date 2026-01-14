@@ -80,9 +80,6 @@ export async function POST(request: Request) {
         const result = await prisma.$transaction(async (tx) => {
             // A. Generate unique voucher number
             const voucherNo = await generateVoucherNo(tx);
-
-            console.log('voucherNo: '+voucherNo);
-            
             // B. Create SetupBill
             const newSetupBill = await tx.setupBill.create({
                 data: {
@@ -100,8 +97,9 @@ export async function POST(request: Request) {
                     receivedBy: session.user.name,
                     voucherNo: voucherNo,
                     customerServiceId: data.customerServiceId,
-                    paidAmount: data.paidAmount,
-                    paidDate: data.paidDate,
+                    // debitAmount: data.debitAmount,
+                    creditAmount: data.paidAmount,
+                    voucherDate: data.paidDate,
                 }
             });
 

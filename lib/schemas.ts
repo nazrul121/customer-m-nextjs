@@ -22,12 +22,14 @@ export const userSchema = z.object({
     .max(11, { message: 'Phone No must be 11 characters' })
     .min(11, {message: 'Phone No must be 11 characters'}),
 
-  password: z.string().min(8, {message: 'Password min: 8 characters long'}),
+  password: z.string()
+    .min(8, { message: 'Password min: 8 characters long' })
+    .optional() 
+    .or(z.literal('')),
   role: z.enum(UserRoles),
-  
+  status: z.string(),
 })
 export type UserForm = z.infer<typeof userSchema>
-
 
 
 export const ServiceTypeSchema = z.object({
@@ -75,8 +77,10 @@ export const CustomerServiceSchema = z.object({
   mmc: z.coerce.number().min(0),
   initCostDis: z.coerce.number().default(0),
   mmcDis: z.coerce.number().default(0),
+  aggreDate:z.coerce.date(),
   startDate: z.coerce.date(),
   expiryDate: z.coerce.date(),
+  initPayment: z.coerce.number().default(0),
   isRepeat: z.enum(["YES", "NO"]),
 });
 
@@ -109,6 +113,7 @@ export const SetupBillSchema = z.object({
   paidAmount: z.coerce.number().min(0, "Amount must be positive"),
   // 🔑 Use coerce to turn string date into a Date object
   paidDate: z.coerce.date(),
+  debitAmount:z.coerce.number().min(0, "Amount must be positive"),
   receivedB: z.string().min(1, "Required"),
 });
 export type SetupBillForm = z.input<typeof SetupBillSchema>;

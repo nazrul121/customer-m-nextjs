@@ -12,7 +12,8 @@ export type CustomerService = {
   initCostDis: number;
   mmcDis: number;
   
-  // Dates and Logic
+  aggreDate: Date | string;
+
   startDate: Date | string;
   expiryDate: Date | string;
   isRepeat: 'YES' | 'NO';

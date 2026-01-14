@@ -4,6 +4,7 @@ export type User = {
   email: string;
   phoneNumber: string;
   role: string;
+  status:string;
   createdAt: Date;
   updatedAt: Date;
 }

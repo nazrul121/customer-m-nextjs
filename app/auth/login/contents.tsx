@@ -67,7 +67,6 @@ export default function LoginContents() {
                 email: form.identifier,
                 password: form.password,
                 rememberMe: true,
-                // Remove callbackURL here to control redirection manually
             });
         } else {
             result = await authClient.signIn.phoneNumber({

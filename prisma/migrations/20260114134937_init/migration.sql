@@ -8,6 +8,7 @@ CREATE TABLE `user` (
     `phoneNumberVerified` BOOLEAN NOT NULL DEFAULT false,
     `image` TEXT NULL,
     `role` VARCHAR(191) NOT NULL DEFAULT 'user',
+    `status` ENUM('INACTIVE', 'ACTIVE') NOT NULL DEFAULT 'INACTIVE',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -118,6 +119,7 @@ CREATE TABLE `CustomerService` (
     `mmc` DECIMAL(10, 2) NOT NULL,
     `initCostDis` DECIMAL(10, 2) NOT NULL,
     `mmcDis` DECIMAL(10, 2) NOT NULL,
+    `aggreDate` DATE NOT NULL,
     `startDate` DATE NOT NULL,
     `expiryDate` DATE NOT NULL,
     `isRepeat` ENUM('NO', 'YES') NOT NULL DEFAULT 'NO',
@@ -164,11 +166,13 @@ CREATE TABLE `SetupBill` (
 CREATE TABLE `GeneralLedger` (
     `id` VARCHAR(191) NOT NULL,
     `customerServiceId` VARCHAR(191) NOT NULL,
-    `purpose` ENUM('MonthlyBill', 'SetupBill') NOT NULL,
+    `purpose` ENUM('MonthlyBill', 'SetupBill', 'Aggrement') NOT NULL,
     `voucherNo` VARCHAR(191) NOT NULL,
-    `paidAmount` DECIMAL(10, 2) NOT NULL DEFAULT 0,
-    `paidDate` DATE NULL,
-    `receivedBy` VARCHAR(191) NOT NULL,
+    `voucherDate` DATE NULL,
+    `debitAmount` DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    `creditAmount` DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    `creditDiscount` DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    `receivedBy` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 

@@ -104,10 +104,10 @@ export default function Sidebar({ collapsed }: SidebarProps) {
             return (
               <li key={item.href}>
                 <Link href={item.href}
-                  className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all tooltip tooltip-top`}
+                  className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all tooltip ${!collapsed?'tooltip-top':'tooltip-right'}`}
                   data-tip={item.name}
                 >
-                  <span className={isActive ? "text-primary-content" : "text-primary"}>
+                  <span className={isActive ? "text-warning " : "text-primary"}>
                     {item.icon}
                   </span>
 

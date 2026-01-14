@@ -59,6 +59,7 @@ export const PaySetupBill: React.FC<PayNowProps> = ({
       // Just pass the string; Zod coerce will handle the conversion
       paidDate: new Date().toISOString().split('T')[0] as any, 
       receivedB: session?.user?.name || "",
+      debitAmount: 0
     },
   });
 
@@ -69,11 +70,12 @@ export const PaySetupBill: React.FC<PayNowProps> = ({
   const totalCost = currentCustomerService?.initCost || 0;
   const enteringNow = Number(watchedPaidAmount) || 0;
   const remaining = totalCost - dbPreviousTotal - enteringNow;
-
+  
   // Sync session name
   useEffect(() => {
-    if (session?.user?.name) setValue("receivedB", session.user.name);
-  }, [session, setValue]);
+    // We use { shouldValidate: true } to ensure zod or form validation picks it up
+    setValue("debitAmount", Number(remaining.toFixed(2)), { shouldValidate: true });
+  }, [remaining, setValue]);
 
   const handleFormSubmit: SubmitHandler<SetupBillForm> = async (formData) => {
     try {
@@ -113,10 +115,7 @@ export const PaySetupBill: React.FC<PayNowProps> = ({
               <label className="label-text font-bold text-[10px] uppercase mb-1">Paying Now</label>
               <div className="relative flex items-center">
                 <span className="absolute left-3"><DollarSign size={14} className="text-primary" /></span>
-                <input 
-                  type="number" 
-                  step="any" 
-                  {...register("paidAmount")} 
+                <input type="number" step="any" {...register("paidAmount")} 
                   className={`input input-bordered input-sm w-full pl-9 font-bold ${remaining < 0 ? 'input-error' : ''}`} 
                 />
               </div>
@@ -126,10 +125,7 @@ export const PaySetupBill: React.FC<PayNowProps> = ({
               <label className="label-text font-bold text-[10px] uppercase mb-1">Remaining Due</label>
               <div className="relative flex items-center">
                 <span className="absolute left-3 text-primary"><DollarSign size={14} /></span>
-                <input 
-                  type="number" 
-                  readOnly 
-                  value={remaining.toFixed(2)} 
+                <input type="number" readOnly value={remaining.toFixed(2)} {...register("debitAmount")} 
                   className={`input input-bordered input-sm w-full pl-9 font-bold bg-base-300/30 ${remaining < 0 ? 'text-error' : ''}`} 
                 />
               </div>

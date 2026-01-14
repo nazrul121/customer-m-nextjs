@@ -17,12 +17,13 @@ datasource db {
 model User {
   id            String    @id
   name          String    @db.Text
-  email         String
+  email         String    
   emailVerified Boolean   @default(false)
   phoneNumber         String?
   phoneNumberVerified Boolean   @default(false)
   image         String?   @db.Text
   role          String   @default("user")
+  status       Status @default(INACTIVE)
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -146,6 +147,8 @@ model CustomerService {
   initCostDis Decimal @db.Decimal(10, 2)
   mmcDis      Decimal @db.Decimal(10, 2)
 
+  aggreDate  DateTime @db.Date
+
   startDate  DateTime @db.Date
   expiryDate DateTime @db.Date
   isRepeat   YesNo    @default(NO)
@@ -204,14 +207,16 @@ model GeneralLedger {
   customerService   CustomerService @relation(fields: [customerServiceId], references: [id], onDelete: Cascade)
 
   purpose  PaymentFor 
-  voucherNo   String
+  voucherNo       String
+  voucherDate     DateTime? @db.Date
  
-  paidAmount Decimal   @default(0) @db.Decimal(10, 2)
-  paidDate   DateTime? @db.Date
-  receivedBy String
+  debitAmount     Decimal   @default(0) @db.Decimal(10, 2)
+  creditAmount    Decimal  @default(0) @db.Decimal(10, 2)
+  creditDiscount  Decimal  @default(0) @db.Decimal(10, 2)
+  receivedBy      String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([customerServiceId])
 }
@@ -229,4 +234,5 @@ enum YesNo {
 enum PaymentFor {
   MonthlyBill
   SetupBill
+  Aggrement
 }

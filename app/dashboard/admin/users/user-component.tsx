@@ -13,6 +13,7 @@ import { DataTable } from '@/app/components/common/DataTable';
 import { Modal } from '@/app/components/common/Modal';
 import { FormPage } from './form';
 import { User } from '@/types/user';
+import { DeleteIcon, Edit, Edit2Icon } from 'lucide-react';
 
 export default function UserCrudPage() {
 
@@ -115,31 +116,72 @@ export default function UserCrudPage() {
   const columnHelper = createColumnHelper<User>();
   const columns = [
     columnHelper.accessor('name', {
-      header: 'Name',
-      cell: (info) => info.getValue(),
+      header: 'Name', cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor('role', {
+      header: 'Role',cell: (info) => info.getValue(),
     }),
     columnHelper.accessor('email', {
-      header: 'Email',
-      cell: (info) => info.getValue(),
+      header: 'Email',cell: (info) => info.getValue(),
     }),
     columnHelper.accessor('phoneNumber', {
-      header: 'Cell No',
-      cell: (info) => info.getValue(),
+      header: 'Cell No', cell: (info) => info.getValue(),
     }),
-  
+    columnHelper.accessor('status', {
+      header: 'Status',
+      cell: (info) => {
+        const status = info.getValue()?.toUpperCase();
+        const isActive = status === 'ACTIVE';
+
+        return (
+          <div className="flex justify-center">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                isActive
+                  ? 'bg-success/10 text-success border-success/20'
+                  : 'bg-error/10 text-error border-error/20'
+              }`}
+            >
+              {status || 'UNKNOWN'}
+            </span>
+          </div>
+        );
+      },
+    }),
     columnHelper.accessor('createdAt', {
       header: 'Created At',
       cell: (info) => formatHumanReadableDate(info.getValue() as unknown as string),
     }),
     columnHelper.display({
       id: 'actions',
-      header: 'Actions',
+      header: () => <div className="text-right pr-4">Actions</div>,
       cell: (props) => (
-        <div className="text-right space-x-2">
-          <button type="button" onClick={() => openModal(props.row.original)} className="btn btn-ghost btn-sm text-info">Edit</button>
-          {/* 🔑 Added type="button" to prevent implicit form submission/page reload */}
-          <button type="button" onClick={() => handleDeleteUser(String(props.row.original.id))} className="btn btn-ghost btn-sm text-error">Delete</button>
-        </div>
+       <div className="flex justify-end items-center gap-2 pr-2">
+      {/* Edit Button */}
+      <div className="tooltip tooltip-top font-bold" data-tip="Edit User">
+        <button
+          type="button"
+          onClick={() => openModal(props.row.original)}
+          className="btn btn-ghost btn-sm btn-square text-info hover:bg-info/10 hover:scale-110 active:scale-95 transition-all duration-200"
+        >
+          <Edit size={18} strokeWidth={2.5} />
+        </button>
+      </div>
+
+      {/* Vertical Divider */}
+      <div className="w-[1px] h-4 bg-base-content/10"></div>
+
+      {/* Delete Button */}
+      <div className="tooltip tooltip-top font-bold" data-tip="Delete User">
+        <button
+          type="button"
+          onClick={() => handleDeleteUser(String(props.row.original.id))}
+          className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10 hover:scale-110 active:scale-95 transition-all duration-200"
+        >
+          <DeleteIcon size={18} strokeWidth={2.5} />
+        </button>
+      </div>
+    </div>
       ),
     }),
   ];

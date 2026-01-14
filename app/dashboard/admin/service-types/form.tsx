@@ -90,7 +90,7 @@ export const FormPage: React.FC<ServiceTypeFormProps> = ({currentServiceType,onC
       
       <div className="form-control w-full mb-4">
         <label className="label"><span className="label-text">Service Type</span></label>
-        <input type="text" placeholder="John Doe" className={`input input-bordered w-full ${errors.title ? 'input-error' : ''}`} {...register('title')} disabled={isBusy} />
+        <input type="text" placeholder="eg. Apllication" className={`input input-bordered w-full ${errors.title ? 'input-error' : ''}`} {...register('title')} disabled={isBusy} />
         {errors.title && <label className="label"><span className="label-text-alt text-error">{errors.title.message}</span></label>}
       </div>
 

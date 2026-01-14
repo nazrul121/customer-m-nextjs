@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { UserForm, userSchema } from '@/lib/schemas';
 import { User } from '@/types/user'; 
 import { toast } from 'react-toastify';
+import { CheckCircle2, Circle } from 'lucide-react';
 
 interface UserFormProps {
   currentUser: User | null;
@@ -16,13 +17,15 @@ interface UserFormProps {
 }
 
 export const FormPage: React.FC<UserFormProps> = ({currentUser,onCancel,onSuccess}) => {
-  const { register, handleSubmit,  reset, 
-    setError, 
-    formState: { errors, isSubmitting }, 
-  } = useForm<UserForm>({
-    resolver: zodResolver(userSchema), mode: 'onBlur', 
-    defaultValues: { name: '', email: '', phoneNumber: ''},
-  });
+
+    const { register, handleSubmit,  reset, watch,
+      setError, 
+      formState: { errors, isSubmitting }, 
+    } = useForm<UserForm>({
+      resolver: zodResolver(userSchema), mode: 'onBlur', 
+      defaultValues: { name: '', email: '', phoneNumber: '',role:'user', status: 'ACTIVE' },
+    });
+
 
   useEffect(() => {
     if (currentUser) {
@@ -30,15 +33,18 @@ export const FormPage: React.FC<UserFormProps> = ({currentUser,onCancel,onSucces
         name: currentUser.name || '',
         email: currentUser.email || '',
         phoneNumber: currentUser.phoneNumber || '',
-        // role: (currentUser.role === 'user' || currentUser.role === 'admin' || currentUser.role === 'guest') ? currentUser.role : 'user',
+        role: currentUser.role as any,
+        status: currentUser.status || 'ACTIVE',
+        password: '', // 🔑 Keep empty on edit
       });
     } else {
-      reset( { name: '', email: '',phoneNumber: ''
-        //  role: 'user' 
-        });
+      reset({ 
+        name: '', email: '', phoneNumber: '', role: 'user', status: 'ACTIVE', password: '' 
+      });
     }
-  }, [currentUser, reset]); 
+  }, [currentUser, reset]);
 
+  const selectedStatus = watch("status");
 
   const handleFormSubmit: SubmitHandler<UserForm> = async (data) => {
     const method = currentUser ? 'PUT' : 'POST'
@@ -102,20 +108,46 @@ export const FormPage: React.FC<UserFormProps> = ({currentUser,onCancel,onSucces
 
       <div className="form-control w-full mb-4">
         <label className="label"><span className="label-text">Email</span></label>
-        <input type="email" placeholder="john.doe@example.com" className={`input input-bordered w-full ${errors.email ? 'input-error' : ''}`} {...register('email')} disabled={!!currentUser || isBusy} />
+        <input type="email" placeholder="john.doe@example.com" className={`input input-bordered w-full ${errors.email ? 'input-error' : ''}`} {...register('email')} disabled={isBusy} />
         {errors.email && <label className="label"><span className="label-text-alt text-error">{errors.email.message}</span></label>}
       </div>
 
       <div className="form-control w-full mb-4">
         <label className="label"><span className="label-text">Phone No</span></label>
-        <input type="number" placeholder="01..." className={`input input-bordered w-full ${errors.phoneNumber ? 'input-error' : ''}`} {...register('phoneNumber')} disabled={!!currentUser || isBusy} />
+        <input type="number" placeholder="01..." className={`input input-bordered w-full ${errors.phoneNumber ? 'input-error' : ''}`} {...register('phoneNumber')} disabled={isBusy} />
         {errors.phoneNumber && <label className="label"><span className="label-text-alt text-error">{errors.phoneNumber.message}</span></label>}
       </div>
 
-      <div className="form-control w-full mb-4">
-        <label className="label"><span className="label-text">Password</span></label>
-        <input type="password" placeholder="*******" className={`input input-bordered w-full ${errors.password ? 'input-error' : ''}`} {...register('password')} disabled={!!currentUser || isBusy} />
-        {errors.password && <label className="label"><span className="label-text-alt text-error">{errors.password.message}</span></label>}
+      {!currentUser && (
+        <div className="form-control w-full mb-4">
+          <label className="label"><span className="label-text">Password</span></label>
+          <input type="password" placeholder="*******" className={`input input-bordered w-full ${errors.password ? 'input-error' : ''}`} 
+            {...register('password')} 
+            disabled={isBusy} 
+          />
+          {errors.password && <label className="label"><span className="label-text-alt text-error">{errors.password.message}</span></label>}
+        </div>
+      )}
+
+      <div className="form-control">
+        <label className="label-text font-bold mb-3">Account Status</label>
+        <div className="flex gap-4">
+          <label className={`flex-1 flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedStatus === 'ACTIVE' ? 'border-success bg-primary/5' : 'border-base-300 hover:border-base-content/20'}`}>
+            <div className="flex items-center gap-3">
+              {selectedStatus === 'ACTIVE' ? <CheckCircle2 className="text-success" /> : <Circle className="opacity-20" />}
+              <span className={`font-bold ${selectedStatus === 'ACTIVE' ? 'text-success' : 'opacity-60'}`}>Active</span>
+            </div>
+            <input type="radio" value="ACTIVE" {...register('status')} className="hidden" />
+          </label>
+
+          <label className={`flex-1 flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedStatus === 'INACTIVE' ? 'border-error bg-error/5' : 'border-base-300 hover:border-base-content/20'}`}>
+            <div className="flex items-center gap-3">
+              {selectedStatus === 'INACTIVE' ? <CheckCircle2 className="text-error" /> : <Circle className="opacity-20" />}
+              <span className={`font-bold ${selectedStatus === 'INACTIVE' ? 'text-error' : 'opacity-60'}`}>Inactive</span>
+            </div>
+            <input type="radio" value="INACTIVE" {...register('status')} className="hidden" />
+          </label>
+        </div>
       </div>
 
 

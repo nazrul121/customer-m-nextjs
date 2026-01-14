@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { CustomerServiceSchema } from '@/lib/schemas';
 import { string } from 'better-auth';
+import { generateVoucherNo } from '@/lib/utils';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 // 1. Update the type to Promise<{ id: string }>
 // /api/customer/[id]/services/route.ts
@@ -57,6 +60,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 // --- POST (Create) ---
 export async function POST(request: Request) {
     try {
+        // 1. Get current session for 'receivedBy'
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+
+        if (!session) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+        
         // 1. Parse JSON body (matching your frontend fetch call)
         const body = await request.json();
 
@@ -87,23 +99,58 @@ export async function POST(request: Request) {
         }
 
         // 4. Create the new record
-        const newCustomerService = await prisma.customerService.create({
+        const result = await prisma.$transaction(async (tx) => {
+            const voucherNo = await generateVoucherNo(tx);
+            
+            const newCustomerService = await prisma.customerService.create({
             data: {
-                customerId: data.customerId,
-                serviceId: data.serviceId,
-                initCost: data.initCost,
-                mmc: data.mmc,
-                initCostDis: data.initCostDis,
-                mmcDis: data.mmcDis,
-                startDate: data.startDate,
-                expiryDate: data.expiryDate,
-                isRepeat: data.isRepeat,
+                    customerId: data.customerId,
+                    serviceId: data.serviceId,
+                    initCost: data.initCost,
+                    mmc: data.mmc,
+                    initCostDis: data.initCostDis,
+                    mmcDis: data.mmcDis,
+                    aggreDate: data.aggreDate,
+                    startDate: data.startDate,
+                    expiryDate: data.expiryDate,
+                    isRepeat: data.isRepeat,
+                }
+            });
+
+            if (data.initPayment > 0) {
+                // Create SetupBill
+                const newSetupBill = await tx.setupBill.create({
+                    data: {
+                        customerServiceId: newCustomerService.id,
+                        paidAmount: data.initPayment,
+                        // 🔑 FIX: Pass a real Date object instead of a string
+                        paidDate: new Date(), 
+                        receivedBy: session.user.name 
+                    }
+                });
             }
+
+            // C. Create General Ledger entry
+            const gl = await tx.generalLedger.create({
+                data: {
+                    purpose: 'Aggrement',
+                    receivedBy: session.user.name,
+                    voucherNo: voucherNo,
+                    customerServiceId: newCustomerService.id,
+                    debitAmount: data.initCost,
+                    creditAmount:data.initPayment,
+                    voucherDate: data.aggreDate,
+                }
+            });
+
+            // Return the record data
+            return newCustomerService;
         });
 
+        // 🚀 Send the response OUTSIDE the transaction
         return NextResponse.json({
             message: 'Subscription created successfully',
-            data: newCustomerService
+            data: result
         }, { status: 201 });
 
     } catch (error: any) {

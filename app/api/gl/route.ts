@@ -1,100 +1,64 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { MonthlyBillSchema } from '@/lib/schemas';
-import {generateVoucherNo}  from "@/lib/utils";
-import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
+
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     const skip = (page - 1) * pageSize;
     const searchTerm = searchParams.get('search') || '';
-    
-    // --- 3. Build the Relational Search ---
-    const whereClause: any = {};
 
+    // Search logic: allows searching by customer name, phone, or service name
+    const whereClause: any = {};
     if (searchTerm) {
       whereClause.OR = [
-        // Search by Voucher Number
-        { voucherNo: { contains: searchTerm, mode: 'insensitive' } },
-        // Search by Purpose (MonthlyBill, SetupBill, etc.)
-        { purpose: { contains: searchTerm, mode: 'insensitive' } },
-        // 🔑 Deep Search: Search by Customer Name inside the relation
-        {
-          customerService: {
-            customer: {
-              name: { contains: searchTerm, mode: 'insensitive' }
-            }
-          }
-        },
-        // 🔑 Deep Search: Search by Customer Phone
-        {
-          customerService: {
-            customer: {
-              phone: { contains: searchTerm, mode: 'insensitive' }
-            }
-          }
-        }
+        { customer: { name: { contains: searchTerm } } },
+        { customer: { phone: { contains: searchTerm } } },
+        { service: { name: { contains: searchTerm } } },
       ];
     }
 
-    // --- 4. Sorting Parameters ---
-    const sortId = searchParams.get('sortId');
-    const sortDir = searchParams.get('sortDir') as 'asc' | 'desc';
-    
-    let orderByClause: any = {};
-
-    // Handle relational sorting if needed, otherwise default to model fields
-    if (sortId && (sortDir === 'asc' || sortDir === 'desc')) {
-        orderByClause[sortId] = sortDir;
-    } else {
-        orderByClause.createdAt = 'desc'; 
-    }
-
-    // --- 5. Fetch Data with Deep Includes ---
-    const [generalLedgers, totalCount] = await prisma.$transaction([
-      prisma.generalLedger.findMany({
+    const [services, totalCount] = await prisma.$transaction([
+      prisma.customerService.findMany({
         where: whereClause,
         include: {
-          customerService: {
-            include: {
-              customer: true,
-              service: {
-                include: {
-                  serviceType: true
-                }
-              }
-            }
-          } 
+          customer: true,
+          service: true,
+          generalLedgers: true, // Fetching entries for calculation
         },
-        skip: skip,
+        skip,
         take: pageSize,
-        orderBy: orderByClause,
+        orderBy: { createdAt: 'desc' },
       }),
-      prisma.generalLedger.count({ 
-        where: whereClause 
-      }),
+      prisma.customerService.count({ where: whereClause }),
     ]);
-    
-    return NextResponse.json({ 
-      data: generalLedgers, 
-      meta: { 
-        totalCount, 
-        pageSize, 
-        currentPage: page,
-        totalPages: Math.ceil(totalCount / pageSize)
-      }
-    }, { status: 200 });
 
+    // --- Data Transformation ---
+    const dataWithSummary = services.map((cs) => {
+      const totalDebit = cs.generalLedgers.reduce((sum, gl) => sum + Number(gl.debitAmount || 0), 0);
+      const totalCredit = cs.generalLedgers.reduce((sum, gl) => sum + Number(gl.creditAmount || 0), 0);
+      
+      return {
+        id: cs.id,
+        customerName: cs.customer.name,
+        customerPhone: cs.customer.phone,
+        serviceName: cs.service.name,
+        totalBilled: totalDebit,
+        totalPaid: totalCredit,
+        balance: totalDebit - totalCredit,
+        ledgerCount: cs.generalLedgers.length,
+        // We pass the full cs object or just the ID for the "More" button
+        customerServiceId: cs.id 
+      };
+    });
+
+    return NextResponse.json({
+      data: dataWithSummary,
+      meta: { totalCount, pageSize, currentPage: page }
+    });
   } catch (error: any) {
-    console.error('Error fetching generalLedger:', error);
-    return NextResponse.json({ 
-      message: 'Failed to fetch data',
-      error: error.message 
-    }, { status: 500 });
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
