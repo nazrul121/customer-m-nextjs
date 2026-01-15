@@ -2,6 +2,7 @@ import { Customer } from "./customer";
 import { Service } from "./service";
 
 export type CustomerService = {
+  setupBills: any;
   bills: any;
   id: string;
   customerId: string;

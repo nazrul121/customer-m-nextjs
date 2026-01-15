@@ -9,7 +9,7 @@ const OptionalFileSchema = z
   
 
 // --- User Schema  ---
-const UserRoles = ["user", "admin", "guest"] as const;
+const UserRoles = ["user", "admin", "customer"] as const;
 export const userSchema = z.object({
   name: z.string()
     .min(2, { message: 'Name must be 2 or more characters long' })
@@ -86,7 +86,6 @@ export const CustomerServiceSchema = z.object({
 
 // 🔑 This is the critical part
 export type CustomerServiceForm = z.input<typeof CustomerServiceSchema>;
-export type CustomerServiceOutput = z.output<typeof CustomerServiceSchema>;
 
 
 export const settingSchema = z.object({

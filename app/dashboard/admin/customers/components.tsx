@@ -169,11 +169,9 @@ export default function CustomerCrud() {
         return (
           <div className="flex items-center justify-end gap-1">
             {customer.aggrePaper ? (
-              <Link href={customer.aggrePaper} target="_blank"
-                rel="noopener noreferrer"  data-tip="View Agreement"
+              <Link href={customer.aggrePaper} target="_blank" rel="noopener noreferrer"  data-tip="View Agreement"
                 className="btn btn-ghost btn-sm text-success tooltip"
-              >
-                <FileText size={18} />
+              > <FileText size={18} />
               </Link>
             ) : (
               <div className="btn btn-sm btn-disabled btn-ghost opacity-40 tooltip" data-tip="No Paper">

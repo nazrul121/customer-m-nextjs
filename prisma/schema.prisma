@@ -33,6 +33,7 @@ model User {
   @@unique([email])
   @@unique([phoneNumber])
   @@map("user")
+  customers Customer[]
 }
 
 model Session {
@@ -89,8 +90,8 @@ model Verification {
 
 model ServiceType {
   id          String @id @default(cuid())
-  title       String
-  description String @db.Text
+  title       String @unique
+  description String? @db.Text
 
   services Service[]
 
@@ -118,15 +119,20 @@ model Service {
 
 model Customer {
   id           String @id @default(cuid())
+  userId       String
+  user         User @relation(fields: [userId], references: [id],onDelete: Cascade)
+
   customerCode String @unique
   name         String
   phone        String @unique
   email        String @unique
-  photo        String @default("/public/image/profile.png")
-  aggrePaper   String
+  photo        String @default("/images/profile.png")
+  aggrePaper   String?
   status       Status @default(INACTIVE)
 
   services CustomerService[]
+
+  @@index([userId])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

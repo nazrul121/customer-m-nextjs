@@ -70,10 +70,11 @@ CREATE TABLE `verification` (
 CREATE TABLE `ServiceType` (
     `id` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `description` TEXT NOT NULL,
+    `description` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `ServiceType_title_key`(`title`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -94,12 +95,13 @@ CREATE TABLE `Service` (
 -- CreateTable
 CREATE TABLE `Customer` (
     `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
     `customerCode` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `phone` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
-    `photo` VARCHAR(191) NOT NULL DEFAULT '/public/image/profile.png',
-    `aggrePaper` VARCHAR(191) NOT NULL,
+    `photo` VARCHAR(191) NOT NULL DEFAULT '/images/profile.png',
+    `aggrePaper` VARCHAR(191) NULL,
     `status` ENUM('INACTIVE', 'ACTIVE') NOT NULL DEFAULT 'INACTIVE',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -107,6 +109,7 @@ CREATE TABLE `Customer` (
     UNIQUE INDEX `Customer_customerCode_key`(`customerCode`),
     UNIQUE INDEX `Customer_phone_key`(`phone`),
     UNIQUE INDEX `Customer_email_key`(`email`),
+    INDEX `Customer_userId_idx`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -188,6 +191,9 @@ ALTER TABLE `account` ADD CONSTRAINT `account_userId_fkey` FOREIGN KEY (`userId`
 
 -- AddForeignKey
 ALTER TABLE `Service` ADD CONSTRAINT `Service_serviceTypeId_fkey` FOREIGN KEY (`serviceTypeId`) REFERENCES `ServiceType`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Customer` ADD CONSTRAINT `Customer_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `CustomerService` ADD CONSTRAINT `CustomerService_customerId_fkey` FOREIGN KEY (`customerId`) REFERENCES `Customer`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

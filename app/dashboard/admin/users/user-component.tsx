@@ -168,16 +168,10 @@ export default function UserCrudPage() {
         </button>
       </div>
 
-      {/* Vertical Divider */}
-      <div className="w-[1px] h-4 bg-base-content/10"></div>
-
       {/* Delete Button */}
-      <div className="tooltip tooltip-top font-bold" data-tip="Delete User">
-        <button
-          type="button"
-          onClick={() => handleDeleteUser(String(props.row.original.id))}
-          className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10 hover:scale-110 active:scale-95 transition-all duration-200"
-        >
+      <div className="tooltip tooltip-left font-bold" data-tip="Delete User">
+        <button type="button" onClick={() => handleDeleteUser(String(props.row.original.id))}
+          className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10 hover:scale-110 active:scale-95 transition-all duration-200">
           <DeleteIcon size={18} strokeWidth={2.5} />
         </button>
       </div>

@@ -13,6 +13,7 @@ import { DataTable } from '@/app/components/common/DataTable';
 import { Modal } from '@/app/components/common/Modal';
 import { FormPage } from './form';
 import { Service } from '@/types/service';
+import { Delete, Edit } from 'lucide-react';
 
 
 export default function ServiceCrud() {
@@ -105,7 +106,6 @@ export default function ServiceCrud() {
             message: errorData.message || 'Server error occurred.' 
         }));
       }
-
     } catch (error) {
       console.error(error);
       throw error; 
@@ -142,9 +142,12 @@ export default function ServiceCrud() {
       header: 'Actions',
       cell: (props) => (
         <div className="text-right space-x-2">
-          <button type="button" onClick={() => openModal(props.row.original)} className="btn btn-ghost btn-sm text-info">Edit</button>
-          {/* 🔑 Added type="button" to prevent implicit form submission/page reload */}
-          <button type="button" onClick={() => handleDeleteType(props.row.original.id)} className="btn btn-ghost btn-sm text-error">Delete</button>
+          <button type="button" onClick={() => openModal(props.row.original)} className="tooltip tooltip-left btn btn-ghost bg-info-content btn-xs" data-tip="Edit Service">
+            <Edit size={15} />
+          </button>
+          <button type="button" onClick={() => handleDeleteType(props.row.original.id)} className="tooltip tooltip-left btn btn-ghost bg-error-content btn-xs" data-tip="Delete Service">
+            <Delete size={18} />
+          </button>
         </div>
       ),
     }),

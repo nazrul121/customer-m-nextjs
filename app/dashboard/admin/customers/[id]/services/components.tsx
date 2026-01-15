@@ -204,15 +204,14 @@ export default function CustomerServicesClient({ customer }: ClientProps) {
         const row = props.row.original;
 
         // Calculate total paid for this specific row
-        const totalPaid = row.setupBills?.reduce((sum, bill) => sum + (Number(bill.paidAmount) || 0), 0) || 0;
+        const totalPaid = row.setupBills?.reduce((sum: number, bill: { paidAmount: any; }) => sum + (Number(bill.paidAmount) || 0), 0) || 0;
         const isFullyPaid = totalPaid >= Number(row.initCost);
 
         return (
           <div className="flex items-center justify-end gap-1">
             {/* Payment Button: Disabled if fully paid */}
             <div className="tooltip tooltip-left" data-tip={isFullyPaid ? "Payment Complete" : "Pay Setup Fee"}>
-              <button onClick={() => openPaymentModal(row)} 
-                className={`btn btn-xs btn-ghost text-success opacity-50}`}>
+              <button onClick={() => openPaymentModal(row)} className={`btn btn-xs hover:bg-accent-content opacity-80}`}>
                 <DollarSign size={16} />
               </button>
             </div>

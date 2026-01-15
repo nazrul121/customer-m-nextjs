@@ -4,9 +4,9 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-import { Settings, Info, DollarSign, Calendar } from 'lucide-react';
+import { Settings, Info, DollarSign, Calendar, SaveIcon, Edit, Save } from 'lucide-react';
 
-import { CustomerServiceForm, CustomerServiceSchema, CustomerServiceOutput } from '@/lib/schemas';
+import { CustomerServiceForm, CustomerServiceSchema } from '@/lib/schemas';
 import { CustomerService } from '@/types/customerService'; 
 import { Service } from '@/types/service';
 import { Customer } from '@/types/customer';
@@ -99,6 +99,7 @@ useEffect(() => {
         ...currentCustomerService,
         startDate: currentCustomerService.startDate ? new Date(currentCustomerService.startDate).toISOString().split('T')[0] : '',
         expiryDate: currentCustomerService.expiryDate ? new Date(currentCustomerService.expiryDate).toISOString().split('T')[0] : '',
+        aggreDate: currentCustomerService.aggreDate ? new Date(currentCustomerService.aggreDate).toISOString().split('T')[0] : '',
       } as any);
     }else{
       reset({
@@ -111,7 +112,7 @@ useEffect(() => {
         mmcDis: 0,
         startDate: '', // Or new Date().toISOString().split('T')[0] for today
         expiryDate: '',
-        aggreDate:new Date().toISOString().split('T')[0],
+        aggreDate:'',
       });
     }
   }, [currentCustomerService, reset]);
@@ -262,8 +263,8 @@ useEffect(() => {
 
       <div className="modal-action">
         <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>Cancel</button>
-        <button type="submit" className="btn btn-primary btn-sm px-10 shadow-lg" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : 'Confirm & Save'}
+        <button type="submit" className="btn btn-primary btn-sm shadow-lg" disabled={isSubmitting}>
+          {isSubmitting ? <><Save size={15}/> Saving... </> : <> <Edit size={15}/> Confirm & Save </>}
         </button>
       </div>
     </form>

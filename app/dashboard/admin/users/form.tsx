@@ -129,7 +129,7 @@ export const FormPage: React.FC<UserFormProps> = ({currentUser,onCancel,onSucces
         </div>
       )}
 
-      <div className="form-control">
+      <div className="form-control w-full">
         <label className="label-text font-bold mb-3">Account Status</label>
         <div className="flex gap-4">
           <label className={`flex-1 flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedStatus === 'ACTIVE' ? 'border-success bg-primary/5' : 'border-base-300 hover:border-base-content/20'}`}>
@@ -151,15 +151,25 @@ export const FormPage: React.FC<UserFormProps> = ({currentUser,onCancel,onSucces
       </div>
 
 
-      {/* <div className="form-control w-full mb-4">
-        <label className="label"><span className="label-text">Role</span></label>
-        <select {...register('role')} className='select select-sm select-bordered w-full' disabled={isBusy}>
-          <option value="user">User</option>
-          <option value="guest">Guest</option>
-          <option value="admin">Admin</option>
-        </select>
-        {errors.role && <label className="label"><span className="label-text-alt text-error">{errors.role.message}</span></label>}
-      </div> */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4 mt-6 form-control">
+        <label className="label min-w-25">
+          <span className="label-text font-semibold">User Role</span>
+        </label>
+
+        <div className="flex flex-wrap gap-4">
+          {['user', 'customer', 'admin'].map((roleType) => (
+            <label key={roleType} className="label cursor-pointer flex items-center gap-2 p-2 bg-info-content">
+              <input type="radio" value={roleType} {...register('role')}
+                className="radio radio-primary radio-sm" disabled={isBusy}
+              />
+              <span className="label-text capitalize">{roleType}</span>
+            </label>
+          ))}
+        </div>
+        {errors.role && (
+          <label className="label"> <span className="label-text-alt text-error">{errors.role.message}</span></label>
+        )}
+      </div>
 
       <div className="modal-action mt-6">
         <button type="button" className="btn" onClick={onCancel} disabled={isBusy}>Cancel </button>

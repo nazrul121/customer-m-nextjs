@@ -69,7 +69,7 @@ const menuItems = [
     group: "Users",
     items: [
       {
-        name: "Users",
+        name: "System Users",
         href: "/dashboard/admin/users",
         icon: <UserCog size={20} />,
       },
@@ -81,16 +81,17 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <ul className={`menu min-h-full bg-base-100 border-r border-base-200 p-2 transition-all duration-300 ${collapsed ? "w-20" : "w-72"}`}>
+    <ul className={`menu min-h-full bg-base-100 border-r border-base-200 p-2 transition-all duration-300 flex flex-col ${collapsed ? "w-20" : "w-72"}`}>
       {/* Logo */}
-      <li className="mb-8 px-2 flex justify-center lg:justify-start">
-      <Link href="/" className="text-xl font-black text-primary tracking-tighter">
-        {collapsed ? "MD" : "MICRO DATASOFT"}
-      </Link>
-    </li>
-
-
-      {menuItems.map((section) => (
+      <div className="flex-1">
+        <li className="mb-8 px-2 flex justify-center lg:justify-start">
+        <Link href="/" className="text-xl font-black text-primary tracking-tighter">
+          {collapsed ? "MD" : "Micro Datasoft"}
+        </Link> 
+      </li>
+      </div>
+        <div className="flex-7 flex flex-col justify-center">
+          {menuItems.map((section) => (
         <React.Fragment key={section.group}>
           {!collapsed && (
             <li className="menu-title uppercase text-[10px] font-bold tracking-widest">
@@ -103,15 +104,13 @@ export default function Sidebar({ collapsed }: SidebarProps) {
 
             return (
               <li key={item.href}>
-                <Link href={item.href}
-                  className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all tooltip ${!collapsed?'tooltip-top':'tooltip-right'}`}
-                  data-tip={item.name}
-                >
+                <Link href={item.href} data-tip={item.name}
+                  className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all tooltip ${!collapsed?'tooltip-top':'tooltip-right'}`}>
                   <span className={isActive ? "text-warning " : "text-primary"}>
                     {item.icon}
                   </span>
 
-                  {!collapsed && <span>{item.name}</span>}
+                  {!collapsed && <span className={isActive ? "text-warning " : "text-info"}>{item.name}</span>}
                 </Link>
               </li>
             );
@@ -119,6 +118,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
 
         </React.Fragment>
       ))}
+        </div>
     </ul>
   );
 }

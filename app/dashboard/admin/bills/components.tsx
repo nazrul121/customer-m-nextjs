@@ -87,11 +87,7 @@ export default function BillCrud() {
             <div className="avatar">
               <div className="bg-neutral text-neutral-content rounded-full w-10 h-10 flex items-center justify-center overflow-hidden">
                 {photo ? (
-                  <img 
-                    src={photo} 
-                    alt={customer?.name || 'Customer'} 
-                    className="object-cover w-full h-full"
-                  />
+                  <img src={photo} alt={customer?.name || 'Customer'} className="object-cover w-full h-full" />
                 ) : (
                   <User size={26} />
                 )}
