@@ -14,7 +14,7 @@ interface Props {
 
 export default function GLDetailContent({ customerServiceId }: Props) {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'voucherDate', desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'voucherNo', desc: true }]);
   const [globalFilter, setGlobalFilter] = useState('');
 
   const { data, isLoading, isFetching } = useQuery({
@@ -26,7 +26,7 @@ export default function GLDetailContent({ customerServiceId }: Props) {
         pageSize: pagination.pageSize.toString(),
         search: globalFilter, 
         customerServiceId: customerServiceId, // 🔑 Filter by ID in backend
-        sortId: sorting[0]?.id || 'voucherDate',
+        sortId: sorting[0]?.id || 'voucherNo',
         sortDir: sorting[0]?.desc ? 'desc' : 'asc'
       });
 
@@ -78,9 +78,46 @@ export default function GLDetailContent({ customerServiceId }: Props) {
       },
     }),
     columnHelper.accessor('receivedBy', {
-        header: 'Collector',
-        cell: (info) => <span className="text-xs opacity-70">{info.getValue() || "System"}</span>,
-    }),
+  header: 'Collector',
+  cell: (info) => {
+    const row = info.row.original;
+    
+    const setupBillId = row.setupBillId;
+    const customerId = row.customerService?.customerId;
+    const monthlyBillId = row.monthlyBillId;
+
+    // 🔑 FIX: Check for 'Aggrement' because that's what is in your DB
+    // Also using .toLowerCase() makes it safer against case issues
+    const isSetupOrAgreement = 
+      row.purpose?.toLowerCase() === 'setupbill' || row.purpose?.toLowerCase() === 'aggrement';
+
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-xs font-medium uppercase opacity-70">
+          {info.getValue() || "System"}
+        </span>
+
+        {isSetupOrAgreement && setupBillId ? (
+          <Link 
+            href={`/dashboard/admin/customers/${customerId}/services/print?serviceId=${row.customerServiceId}&setupbill=${setupBillId}`}
+            className="btn btn-xs btn-outline btn-primary w-fit font-bold"
+          >
+            Print Invoice
+          </Link>
+        ) : null}
+
+        {monthlyBillId ? (
+          <Link 
+            href={`/dashboard/admin/customers/${customerId}/services/print?serviceId=${row.customerServiceId}&setupbill=${setupBillId}`}
+            className="btn btn-xs btn-outline btn-primary w-fit font-bold"
+          >
+            Print Invoice
+          </Link>
+        ) : null}
+      </div>
+    );
+  },
+}),
   ], [columnHelper]);
 
   return (

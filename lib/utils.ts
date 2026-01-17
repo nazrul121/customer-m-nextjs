@@ -23,8 +23,8 @@ export function formatHumanReadableDate(dateInput: Date | string): string {
   const hasNoTime = isLocalMidnight || isUTCMidnight;
 
   const formatString = hasNoTime 
-    ? "dd/MM/yyyy" 
-    : "dd/MM/yyyy 'at' hh:mm a";
+    ? "dd MMM, yyyy" 
+    : "dd/MMM/yyyy 'at' hh:mm a";
 
   return format(date, formatString);
 }

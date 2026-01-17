@@ -162,6 +162,7 @@ model CustomerService {
   bills MonthlyBill[]
   setupBills SetupBill[]
   generalLedgers GeneralLedger[]
+  
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -187,6 +188,8 @@ model MonthlyBill {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  ledgers        GeneralLedger[]
+
   @@index([customerServiceId])
 }
 
@@ -202,6 +205,8 @@ model SetupBill {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  ledgers        GeneralLedger[]
 
   @@index([customerServiceId])
 }
@@ -223,6 +228,12 @@ model GeneralLedger {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+ 
+  setupBillId       String?
+  setupBill         SetupBill?      @relation(fields: [setupBillId], references: [id])
+
+  monthlyBillId       String?
+  monthlyBill         MonthlyBill?      @relation(fields: [monthlyBillId], references: [id])
 
   @@index([customerServiceId])
 }

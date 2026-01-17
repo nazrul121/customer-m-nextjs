@@ -4,12 +4,13 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
-import { Settings, Info, DollarSign, Calendar, SaveIcon, Edit, Save } from 'lucide-react';
+import { Settings, DollarSign, Edit, Save } from 'lucide-react';
 
 import { CustomerServiceForm, CustomerServiceSchema } from '@/lib/schemas';
 import { CustomerService } from '@/types/customerService'; 
 import { Service } from '@/types/service';
 import { Customer } from '@/types/customer';
+import router from 'next/router';
 
 interface FormPageProps {
   currentCustomerService: CustomerService | null;
@@ -152,7 +153,7 @@ useEffect(() => {
       }
 
       onSuccess();
-      toast.success(currentCustomerService ? "Updated successfully" : "Assigned successfully");
+      toast.success(currentCustomerService ? "Service Updated successfully" : "Service Assigned successfully");
       
     } catch (error: any) {
       console.error(error);

@@ -59,7 +59,7 @@ const menuItems = [
         icon: <CalendarCheck size={20} />,
       },
       {
-        name: "General Ledger",
+        name: "Customer Ledger",
         href: "/dashboard/admin/gl",
         icon: <Wallet size={20} />,
       },

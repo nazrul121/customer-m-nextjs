@@ -28,7 +28,7 @@ export const Modal = ({ id, title, isOpen, onClose, children }: ModalProps) => {
   };
 
   return (
-    <dialog id={id} ref={dialogRef} className="modal" onClose={handleCancel}>
+    <dialog id={id} ref={dialogRef} className="modal z-20" onClose={handleCancel}>
       <div className="modal-box w-11/12 max-w-2xl">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-lg">{title}</h3>

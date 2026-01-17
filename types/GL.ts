@@ -1,4 +1,6 @@
 export type GL = {
+  monthlyBillId: any;
+  setupBillId: any;
   customerService: any;
   id: string;
   customerServiceId : string;

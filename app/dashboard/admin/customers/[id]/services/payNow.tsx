@@ -4,6 +4,7 @@ import { CustomerService } from "@/types/customerService";
 import { SetUpBill } from "@/types/setupBill";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DollarSign } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React, { useMemo, useState, useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -21,6 +22,8 @@ export const PaySetupBill: React.FC<PayNowProps> = ({
   onCancel, 
   onSuccess 
 }) => {
+  const router = useRouter();
+
   const { data: session } = useSession();
   const [dbPreviousTotal, setDbPreviousTotal] = useState<number>(0);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -84,8 +87,23 @@ export const PaySetupBill: React.FC<PayNowProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(currentSetupBill ? { ...formData, id: currentSetupBill.id } : formData),
       });
-      if (!response.ok) throw new Error("Failed to save");
-      toast.success("Success");
+
+      const result = await response.json(); // ✅ parse JSON
+
+      if (!response.ok) throw new Error(result.message || "Failed to save");
+
+      toast.success("Subscription fee saved successfully!");
+
+      const serviceId = currentCustomerService?.id;
+      const setupBillId = result.data?.id; // ✅ get new setupBill ID
+
+      if (!serviceId || !setupBillId) {
+        throw new Error("Missing IDs for printing");
+      }
+
+      // Redirect to print page with the newly created SetupBill ID
+      window.location.href = `/dashboard/admin/customers/${currentCustomerService.customerId}/services/print?serviceId=${serviceId}&setupbill=${setupBillId}`;
+
       onSuccess();
     } catch (error: any) {
       toast.error(error.message);

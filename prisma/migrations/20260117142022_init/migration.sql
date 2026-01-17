@@ -178,6 +178,8 @@ CREATE TABLE `GeneralLedger` (
     `receivedBy` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `setupBillId` VARCHAR(191) NULL,
+    `monthlyBillId` VARCHAR(191) NULL,
 
     INDEX `GeneralLedger_customerServiceId_idx`(`customerServiceId`),
     PRIMARY KEY (`id`)
@@ -209,3 +211,9 @@ ALTER TABLE `SetupBill` ADD CONSTRAINT `SetupBill_customerServiceId_fkey` FOREIG
 
 -- AddForeignKey
 ALTER TABLE `GeneralLedger` ADD CONSTRAINT `GeneralLedger_customerServiceId_fkey` FOREIGN KEY (`customerServiceId`) REFERENCES `CustomerService`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `GeneralLedger` ADD CONSTRAINT `GeneralLedger_setupBillId_fkey` FOREIGN KEY (`setupBillId`) REFERENCES `SetupBill`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `GeneralLedger` ADD CONSTRAINT `GeneralLedger_monthlyBillId_fkey` FOREIGN KEY (`monthlyBillId`) REFERENCES `MonthlyBill`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

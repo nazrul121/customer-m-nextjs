@@ -31,8 +31,8 @@ export default function ToastProvider() {
 
   return (
     <ToastContainer 
-      theme={toastifyTheme} 
-      position="top-right"  autoClose={3000} 
+      theme={toastifyTheme} className={'z-40'}
+      position="top-right"  autoClose={30000} 
       hideProgressBar={true}
     />
   );

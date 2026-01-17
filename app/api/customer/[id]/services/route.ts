@@ -128,20 +128,21 @@ export async function POST(request: Request) {
                         receivedBy: session.user.name 
                     }
                 });
-            }
 
-            // C. Create General Ledger entry
-            const gl = await tx.generalLedger.create({
-                data: {
-                    purpose: 'Aggrement',
-                    receivedBy: session.user.name,
-                    voucherNo: voucherNo,
-                    customerServiceId: newCustomerService.id,
-                    debitAmount: data.initCost,
-                    creditAmount:data.initPayment,
-                    voucherDate: data.aggreDate,
-                }
-            });
+                // C. Create General Ledger entry
+                const gl = await tx.generalLedger.create({
+                    data: {
+                        purpose: 'Aggrement',
+                        receivedBy: session.user.name,
+                        voucherNo: voucherNo,
+                        customerServiceId: newCustomerService.id,
+                        debitAmount: data.initCost,
+                        creditAmount:data.initPayment,
+                        voucherDate: data.aggreDate,
+                        setupBillId: newSetupBill?.id || null
+                    }
+                });
+            }
 
             // Return the record data
             return newCustomerService;

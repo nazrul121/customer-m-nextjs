@@ -6,71 +6,119 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 
 export async function GET(request: Request) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const month = searchParams.get('month') || '2026-01'; // e.g., "2026-01"
-        
-        // 1. Calculate boundaries for the selected month
-        // First day of selected month: 2026-01-01
-        const startOfMonth = new Date(`${month}-01T00:00:00Z`);
-        // Last day of selected month
-        const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0, 23, 59, 59);
+  try {
+    const { searchParams } = new URL(request.url);
 
-        const page = parseInt(searchParams.get('page') || '1');
-        const pageSize = parseInt(searchParams.get('pageSize') || '10');
-        const skip = (page - 1) * pageSize;
-        const search = searchParams.get('search') || '';
+    // -------------------------
+    // 1. Month parsing (YYYY-MM)
+    // -------------------------
+    const month = searchParams.get("month") || "2026-01";
+    const [year, monthNum] = month.split("-").map(Number);
 
-        // 2. Updated Where Clause
-        const where: any = {
-            AND: [
-                // 🔑 Validity Check:
-                // Start date must be before or during this month
-                { startDate: { lte: endOfMonth } },
-                // Expiry date must be after or during this month
-                { expiryDate: { gte: startOfMonth } }
-            ]
-        };
+    // Local time boundaries (NO UTC)
+    const startOfMonth = new Date(year, monthNum - 1, 1, 0, 0, 0);
+    const endOfMonth = new Date(year, monthNum, 0, 23, 59, 59);
 
-        // 3. Add Search if present
-        if (search) {
-            where.AND.push({
-                OR: [
-                    { customer: { name: { contains: search } } },
-                    { customer: { customerCode: { contains: search } } },
-                    { service: { name: { contains: search } } },
-                ],
-            });
-        }
+    // -------------------------
+    // 2. Pagination & Search
+    // -------------------------
+    const page = parseInt(searchParams.get("page") || "1");
+    const pageSize = parseInt(searchParams.get("pageSize") || "10");
+    const skip = (page - 1) * pageSize;
+    const search = searchParams.get("search") || "";
 
-        // ... sorting logic remains the same ...
-        const sortId = searchParams.get('sortId') || 'createdAt';
-        const sortDir = searchParams.get('sortDir') || 'desc';
-        let orderBy: any = { [sortId]: sortDir };
-        if (sortId === 'customer') orderBy = { customer: { name: sortDir } };
-        if (sortId === 'service') orderBy = { service: { name: sortDir } };
+    // -------------------------
+    // 3. WHERE clause (ACTIVE services in month)
+    // -------------------------
+    const where: any = {
+      AND: [
+        {
+          startDate: {
+            lte: endOfMonth, // started before month ends
+          },
+        },
+        {
+          expiryDate: {
+            gte: startOfMonth, // ends after month starts
+          },
+        },
+        {
+          mmc: {
+            gt: 0, // customerService.mmc > 0
+          },
+        },
+      ],
+    };
 
-        const [data, totalCount] = await prisma.$transaction([
-            prisma.customerService.findMany({
-                where,
-                skip,
-                take: pageSize,
-                orderBy,
-                include: {
-                    customer: true,
-                    service: { include: { serviceType: true } },
-                    bills: {
-                        where: { monthFor: month } // Still fetch existing bills for this month
-                    }
-                },
-            }),
-            prisma.customerService.count({ where })
-        ]);
-
-        return NextResponse.json({ data, meta: { totalCount } });
-    } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+    // -------------------------
+    // 4. Search filter
+    // -------------------------
+    if (search) {
+      where.AND.push({
+        OR: [
+          { customer: { name: { contains: search } } },
+          { customer: { customerCode: { contains: search } } },
+          { service: { name: { contains: search} } },
+        ],
+      });
     }
+
+    // -------------------------
+    // 5. Sorting
+    // -------------------------
+    const sortId = searchParams.get("sortId") || "createdAt";
+    const sortDir = searchParams.get("sortDir") || "desc";
+
+    let orderBy: any = { [sortId]: sortDir };
+    if (sortId === "customer") orderBy = { customer: { name: sortDir } };
+    if (sortId === "service") orderBy = { service: { name: sortDir } };
+
+    // -------------------------
+    // 6. Query + Count
+    // -------------------------
+    const [data, totalCount] = await prisma.$transaction([
+      prisma.customerService.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy,
+        include: {
+          customer: true,
+          service: {
+            include: {
+              serviceType: true,
+            },
+          },
+          // Optional: show bills for selected month (does NOT filter services)
+          bills: {
+            where: {
+              monthFor: month
+            },
+          },
+        },
+      }),
+      prisma.customerService.count({ where }),
+    ]);
+
+    // -------------------------
+    // 7. Response
+    // -------------------------
+    return NextResponse.json({
+      data,
+      meta: {
+        totalCount,
+        page,
+        pageSize,
+        month,
+      },
+    });
+  } catch (error: any) {
+    console.error(error);
+    return NextResponse.json(
+      { message: error.message || "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {
@@ -94,7 +142,7 @@ export async function POST(request: Request) {
                 where: { id: validated.customerServiceId },
                 include: {
                     bills: {
-                        where: { monthFor: validated.monthFor }
+                        where: { monthFor: validated.monthFor}
                     }
                 }
             });
@@ -140,7 +188,8 @@ export async function POST(request: Request) {
                     customerServiceId: validated.customerServiceId,
                     purpose: 'MonthlyBill',
                     voucherDate: billingDate,
-                    debitAmount: { gt: 0 } // Only looking for the bill generation entry
+                    debitAmount: { gt: 0 } ,
+                    monthlyBillId:payment.id
                 }
             });
 
@@ -154,7 +203,8 @@ export async function POST(request: Request) {
                         customerServiceId: validated.customerServiceId,
                         creditAmount: 0,
                         debitAmount: mmc,
-                        receivedBy: 'SYSTEM', // Bills are generated by the system
+                        receivedBy: 'SYSTEM', 
+                        monthlyBillId:payment.id
                     }
                 });
             }
@@ -169,6 +219,7 @@ export async function POST(request: Request) {
                     customerServiceId: validated.customerServiceId,
                     creditAmount: validated.paidAmount,
                     receivedBy: session.user.name,
+                    monthlyBillId:payment.id
                 }
             });
 

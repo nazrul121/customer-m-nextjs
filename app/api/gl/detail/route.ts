@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     }
 
     // --- 2. Build Sorting ---
-    const sortId = searchParams.get('sortId') || 'createdAt';
+    const sortId = searchParams.get('sortId') || 'voucherNo';
     const sortDir = (searchParams.get('sortDir') as 'asc' | 'desc') || 'desc';
     let orderByClause: any = {};
     if (sortId === 'customer') {
@@ -46,7 +46,8 @@ export async function GET(request: Request) {
               customer: true,
               service: { include: { serviceType: true } }
             }
-          }
+          },
+          setupBill:true
         },
         skip,
         take: pageSize,

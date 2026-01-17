@@ -16,7 +16,7 @@ export async function GET() {
     try {
         const [servicesCount, usersCount] = await Promise.all([
             prisma.service.count(),
-            prisma.user.count(),
+            prisma.customer.count(),
         ]);
 
         return NextResponse.json({

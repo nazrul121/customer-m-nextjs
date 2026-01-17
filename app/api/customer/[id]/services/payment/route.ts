@@ -10,6 +10,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> } // Define params as a Promise
 ) {
+  console.log('customer/id/services/payment');
   try {
     // 1. Await the params to get the ID
     const resolvedParams = await params;
@@ -100,6 +101,7 @@ export async function POST(request: Request) {
                     // debitAmount: data.debitAmount,
                     creditAmount: data.paidAmount,
                     voucherDate: data.paidDate,
+                    setupBillId: newSetupBill?.id || null
                 }
             });
 
