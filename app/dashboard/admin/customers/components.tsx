@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query'; 
 import { createColumnHelper, SortingState, PaginationState } from '@tanstack/react-table';
-// Logic/Types
 
 import { CustomerForm } from '@/lib/schemas';
 import { formatHumanReadableDate } from '@/lib/utils'; 
@@ -29,8 +28,8 @@ export default function CustomerCrud() {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [globalFilter, setGlobalFilter] = useState('');
 
-  // --- 2. Data Fetching (Uses unique queryKey based on all states) ---
-  const { data, isLoading, isFetching } = useQuery({
+  // --- 2. Data Fetching ---
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['customers', pagination.pageIndex, pagination.pageSize, globalFilter, sorting],
     queryFn: async () => {
       const pageParam = pagination.pageIndex + 1;
@@ -40,7 +39,6 @@ export default function CustomerCrud() {
       const params = new URLSearchParams({
         page: pageParam.toString(),
         pageSize: pagination.pageSize.toString(),
-        // Note: The route should handle .trim().toLowerCase() on this search term
         search: globalFilter, 
         ...(sortId && { sortId, sortDir: sortDire })
       });
@@ -50,6 +48,9 @@ export default function CustomerCrud() {
       return await response.json();
     },
     placeholderData: (previousData) => previousData,
+    // 🔑 ADD THESE TWO LINES:
+    staleTime: 0, // Consider data old immediately so it re-fetches on navigation
+    refetchOnMount: true, // Re-fetch every time the component mounts (back button)
   });
 
   const customers = data?.data || [];

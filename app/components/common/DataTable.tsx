@@ -83,7 +83,7 @@ export function DataTable<TData extends { id: string | number }, TValue>({
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-base-100/40 backdrop-blur-[2px] transition-all">
              <div className="flex flex-col items-center gap-2">
                <span className="loading loading-spinner loading-lg text-primary"></span>
-               <span className="text-xs font-bold animate-pulse opacity-50">SYNCING...</span>
+               <span className="text-xs font-bold animate-pulse opacity-50">Searching...</span>
              </div>
           </div>
         )}
@@ -91,11 +91,7 @@ export function DataTable<TData extends { id: string | number }, TValue>({
         <div className="min-h-50">
           {!isLoading && data.length === 0 ? (
             /* 🔑 Integrated the Nice Empty State */
-            <EmptyState 
-              title="No records found"
-              message="Try adjusting your search or filters to find what you're looking for."
-              onReset={() => onGlobalFilterChange('')}
-            />
+            <EmptyState title="No records found" message="Try adjusting your search or filters to find what you're looking for." onReset={()=>onGlobalFilterChange('')} />
           ) : (
             <table className="table w-full">
               <thead className="bg-base-200/50">

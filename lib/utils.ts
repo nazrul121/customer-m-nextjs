@@ -42,3 +42,24 @@ export async function generateVoucherNo(tx: Prisma.TransactionClient) {
 
     return `${year}-${month}-${sequence}`;
 }
+
+
+/**
+ * Converts a "YYYY-MM" string into a human-readable month (e.g., "January 2026")
+ */
+
+export const formatMonthName = (monthStr: string): string => {
+  if (!monthStr) return "";
+
+  // Split "2026-01" into ["2026", "01"]
+  const [year, month] = monthStr.split("-");
+
+  // Create a date object. 
+  // Note: month index is 0-based in JS (January is 0), so we subtract 1.
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+
+  return new Intl.DateTimeFormat('en-US', { 
+    month: 'long', 
+    year: 'numeric' 
+  }).format(date);
+};

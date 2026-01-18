@@ -80,7 +80,7 @@ export const FormPage: React.FC<ServiceFormProps> = ({ currentService, onCancel,
       }
 
       onSuccess();
-      toast.success(currentService ? "Service updated!" : "Service created!");
+      toast.success(currentService ? "The service has been updated successfully!" : "The service has been created successfully!");
 
     } catch (error: any) {
       setError("root", { 
@@ -178,18 +178,10 @@ export const FormPage: React.FC<ServiceFormProps> = ({ currentService, onCancel,
             <span className="label-text font-medium text-base">MMC</span>
             </label>
             <div className="relative">
-            <input 
-                type="number" 
-                step="0.01"
-                placeholder="0.00"
-                className={`input input-bordered w-full pr-12 ${errors.mmc ? 'input-error' : ''}`} 
-                {...register('mmc', { valueAsNumber: true })} 
-                disabled={isBusy} 
-                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+            <input type="number"  step="0.01" placeholder="0.00" className={`input input-bordered w-full pr-12 ${errors.mmc ? 'input-error' : ''}`} 
+                {...register('mmc', { valueAsNumber: true })}  disabled={isBusy}  onWheel={(e) => (e.target as HTMLInputElement).blur()}
             />
-            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none opacity-50">
-                /mo
-            </div>
+            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none opacity-50">/mo </div>
             </div>
             {errors.mmc && (
             <span className="text-error text-xs mt-1 px-1">{errors.mmc.message}</span>

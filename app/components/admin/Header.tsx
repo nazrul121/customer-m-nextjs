@@ -7,6 +7,7 @@ import {
   User2Icon,
   PanelLeftClose,
   PanelLeftOpen,
+  AlignCenterHorizontalIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -36,11 +37,8 @@ export default function Header({
     <header className="navbar bg-base-100 border-b border-base-300 sticky top-0 z-30 px-4">
       <div className="flex-1 flex items-center gap-2">
         {/* Mobile drawer toggle */}
-        <label
-          htmlFor="admin-drawer"
-          className="btn btn-square btn-ghost lg:hidden"
-        >
-          ☰
+        <label htmlFor="admin-drawer" className="btn btn-square btn-ghost lg:hidden">
+          <AlignCenterHorizontalIcon size={18} />
         </label>
 
         {/* Desktop collapse toggle */}

@@ -1,32 +1,41 @@
-// app/dashboard/admin/customers/[id]/services/print/page.tsx
 import prisma from "@/lib/prisma";
-import { formatHumanReadableDate } from "@/lib/utils";
+import { formatHumanReadableDate, formatMonthName } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { MapPin, Phone, Globe, Calendar, Hash, ShieldCheck } from "lucide-react";
-import PrintButton from "./PrintButton";
 import Script from "next/script";
 import SavePDFButton from "./SavePDFButton";
+import PrintButton from "./PrintButton";
 
 interface Props {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ serviceId?: string; setupbill?: string }>;
+  // params is empty because the folder is now "print/page.tsx" (static)
+  params: Promise<{}>; 
+  // searchParams matches the keys in your URL string
+  searchParams: Promise<{ serviceId?: string; monthlyBillId?: string }>;
 }
 
 export default async function PremiumInvoicePage({ params, searchParams }: Props) {
-  const { id: customerId } = await params;
-  const { serviceId, setupbill: setupBillId } = await searchParams;
+  // 1. Await and Destructure exactly as named in the URL
+  const { serviceId, monthlyBillId } = await searchParams;
 
-  if (!serviceId || !setupBillId) return notFound();
+  // 2. Safety Check: If these are missing, the page 404s
+  if (!serviceId || !monthlyBillId) {
+    console.error("DEBUG: URL parameters are missing!", { serviceId, monthlyBillId });
+    return notFound();
+  }
 
-  const data = await prisma.setupBill.findUnique({
-    where: { id: setupBillId },
+  // 3. Query Prisma using the monthlyBillId from the URL
+  const data = await prisma.monthlyBill.findUnique({
+    where: { id: monthlyBillId }, // This must match the URL variable
     include: {
       customerService: {
         include: {
           customer: true,
           service: { include: { serviceType: true } },
           generalLedgers: {
-            where: { creditAmount: { gt: 0 } },
+            where: { 
+              creditAmount: { gt: 0 },
+              purpose: 'MonthlyBill'
+            },
             orderBy: { voucherNo: "asc" },
           },
         },
@@ -34,21 +43,28 @@ export default async function PremiumInvoicePage({ params, searchParams }: Props
     },
   });
 
-  if (!data) return notFound();
+  if (!data) {
+    console.error("DEBUG: No bill found in database for ID:", monthlyBillId);
+    return notFound();
+  }
 
   const { customer, service, generalLedgers } = data.customerService;
-  const currentLedger = generalLedgers.find((l) => l.setupBillId === setupBillId);
+  const currentLedger = generalLedgers.find((l) => l.monthlyBillId === monthlyBillId);
   const currentVoucherNo = currentLedger?.voucherNo || "N/A";
 
   const currentPayment = Number(data.paidAmount);
-  const initCost = Number(data.customerService.initCost);
+  const mmc = Number(data.customerService.mmc);
+  const mmcDis = Number(data.customerService.mmcDis);
+  const monthFor = data.monthFor;
 
   const previousPaidAmount = generalLedgers
-    .filter((l) => l.voucherNo < currentVoucherNo)
-    .reduce((acc, curr) => acc + Number(curr.creditAmount), 0);
+  .filter((l) => l.purpose === 'MonthlyBill' && l.voucherNo < currentVoucherNo)
+  .reduce((acc, curr) => acc + Number(curr.creditAmount), 0);
 
   const totalPaidSoFar = previousPaidAmount + currentPayment;
-  const balanceDue = initCost - totalPaidSoFar;
+  const serviceCharge = mmc - mmcDis;
+
+  const balanceDue = totalPaidSoFar - serviceCharge;
 
   return (
     <>
@@ -59,15 +75,13 @@ export default async function PremiumInvoicePage({ params, searchParams }: Props
           <h1 className="text-xl font-bold text-slate-700">Invoice Preview</h1>
           <div className="flex gap-3">
             {/* Use the Client Component Button here */}
-           <SavePDFButton voucherNo={currentVoucherNo} customerName={customer.name} />
+            <SavePDFButton voucherNo={currentVoucherNo} customerName={customer.name} />
             <PrintButton />
           </div>
         </div>
 
         {/* A4 Page Container */}
-        <div id="printable-invoice" 
-            className="mx-auto bg-white shadow-2xl w-[210mm] h-[297mm] p-[15mm] text-slate-800 flex flex-col justify-between relative print:shadow-none print:m-0"
-          >         
+        <div id="printable-invoice" className="mx-auto bg-white shadow-2xl w-[210mm] h-[297mm] p-[15mm] text-slate-800 flex flex-col justify-between relative print:shadow-none print:m-0">         
           <div className="w-full">
             <div className="flex justify-between items-start border-b-2 border-slate-100 pb-6 mb-8">
               <div>
@@ -128,13 +142,13 @@ export default async function PremiumInvoicePage({ params, searchParams }: Props
                 <tbody className="divide-y divide-slate-100">
                   <tr>
                     <td className="py-5 px-4">
-                      <p className="font-bold text-slate-900 text-lg">Initial Setup & Activation</p>
+                      <p className="font-bold text-slate-900 text-lg">Service charge</p>
                       <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-sm">
-                        Professional hardware installation, fiber-optic configuration, and service provisioning.
+                        Monthly service charge for  {formatMonthName(monthFor)}
                       </p>
                     </td>
                     <td className="py-5 px-4 text-right font-black text-2xl text-slate-900">
-                      ৳{initCost.toLocaleString()}
+                      ৳{serviceCharge.toLocaleString()}
                     </td>
                   </tr>
                 </tbody>
@@ -143,10 +157,7 @@ export default async function PremiumInvoicePage({ params, searchParams }: Props
 
             <div className="flex justify-end pr-4">
               <div className="w-80 space-y-3">
-                <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  <span>Total Contract Value</span>
-                  <span className="text-slate-900">৳{initCost.toLocaleString()}</span>
-                </div>
+               
                 {previousPaidAmount > 0 && (
                   <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-widest">
                     <span>Previously Paid</span>
@@ -154,13 +165,13 @@ export default async function PremiumInvoicePage({ params, searchParams }: Props
                   </div>
                 )}
                 <div className="flex justify-between text-sm font-black text-success py-2 border-b-2 border-slate-50">
-                  <span className="uppercase tracking-widest">Received Today</span>
+                  <span className="tracking-widest">Received Today</span>
                   <span>৳{currentPayment.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pt-2">
                   <span className="font-black uppercase text-[13px] text-slate-400 tracking-[0.3em]">Closing Balance</span>
                   <span className="font-black text-2xl tracking-tighter">
-                    ৳{balanceDue.toLocaleString()}
+                    ৳ {balanceDue.toLocaleString()}
                   </span>
                 </div>
               </div>

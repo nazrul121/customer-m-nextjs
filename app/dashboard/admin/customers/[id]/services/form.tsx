@@ -229,7 +229,7 @@ useEffect(() => {
 
         <div className="form-control">
           <label className="label-text font-bold mb-1 text-xs tracking-wider">Initial Payment</label>
-          <input type="number" {...register('initPayment')} className="input input-bordered input-sm" />
+          <input type="number" {...register('initPayment')} className="input input-bordered input-sm focus:text-2xl" />
           {errors.initPayment && <span className="text-error text-[10px] mt-1">{errors.initPayment.message as string}</span>}
         </div>
 

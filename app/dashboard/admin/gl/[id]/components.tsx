@@ -78,46 +78,40 @@ export default function GLDetailContent({ customerServiceId }: Props) {
       },
     }),
     columnHelper.accessor('receivedBy', {
-  header: 'Collector',
-  cell: (info) => {
-    const row = info.row.original;
-    
-    const setupBillId = row.setupBillId;
-    const customerId = row.customerService?.customerId;
-    const monthlyBillId = row.monthlyBillId;
+      header: 'Collector',
+      cell: (info) => {
+        const row = info.row.original;
+        
+        const setupBillId = row.setupBillId;
+        const customerId = row.customerService?.customerId;
+        const monthlyBillId = row.monthlyBillId;
 
-    // 🔑 FIX: Check for 'Aggrement' because that's what is in your DB
-    // Also using .toLowerCase() makes it safer against case issues
-    const isSetupOrAgreement = 
-      row.purpose?.toLowerCase() === 'setupbill' || row.purpose?.toLowerCase() === 'aggrement';
+        // 🔑 FIX: Check for 'Aggrement' because that's what is in your DB
+        // Also using .toLowerCase() makes it safer against case issues
+        const isSetupOrAgreement = 
+          row.purpose?.toLowerCase() === 'setupbill' || row.purpose?.toLowerCase() === 'aggrement';
 
-    return (
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium uppercase opacity-70">
-          {info.getValue() || "System"}
-        </span>
+        return (
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium uppercase opacity-70">
+              {info.getValue() || "System"}
+            </span>
 
-        {isSetupOrAgreement && setupBillId ? (
-          <Link 
-            href={`/dashboard/admin/customers/${customerId}/services/print?serviceId=${row.customerServiceId}&setupbill=${setupBillId}`}
-            className="btn btn-xs btn-outline btn-primary w-fit font-bold"
-          >
-            Print Invoice
-          </Link>
-        ) : null}
+            {isSetupOrAgreement && setupBillId ? (
+              <Link href={`/dashboard/admin/customers/${customerId}/services/print?serviceId=${row.customerServiceId}&setupbill=${setupBillId}`}
+                className="btn btn-xs btn-outline btn-primary w-fit font-bold"> Print Invoice
+              </Link>
+            ) : null}
 
-        {monthlyBillId ? (
-          <Link 
-            href={`/dashboard/admin/customers/${customerId}/services/print?serviceId=${row.customerServiceId}&setupbill=${setupBillId}`}
-            className="btn btn-xs btn-outline btn-primary w-fit font-bold"
-          >
-            Print Invoice
-          </Link>
-        ) : null}
-      </div>
-    );
-  },
-}),
+            {monthlyBillId && row.creditAmount>0 ? (
+              <Link href={`/dashboard/admin/bills/print?serviceId=${row.customerServiceId}&monthlyBillId=${monthlyBillId}`}
+                className="btn btn-xs btn-outline btn-primary w-fit font-bold"> Print Invoice
+              </Link>
+            ) : null}
+          </div>
+        );
+      },
+    }),
   ], [columnHelper]);
 
   return (
@@ -132,7 +126,7 @@ export default function GLDetailContent({ customerServiceId }: Props) {
                 {customerName}
             </h1>
             <p className="text-sm font-bold opacity-60 uppercase">
-                Statement of Account: <span className="text-primary">{serviceName}</span>
+                Statement of Account: <span className="text-primary">{serviceName} - {customerName}</span>
             </p>
           </div>
           

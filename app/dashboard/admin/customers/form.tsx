@@ -50,7 +50,6 @@ export const FormPage: React.FC<CustomerFormProps> = ({ currentCustomer, onCance
   const handleFormSubmit: SubmitHandler<CustomerForm> = async (data) => {
     try {
       const formData = new FormData();
-      
       // Append text fields
       formData.append('name', data.name);
       formData.append('customerCode', data.customerCode);
@@ -80,10 +79,12 @@ export const FormPage: React.FC<CustomerFormProps> = ({ currentCustomer, onCance
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || 'Failed to save');
 
+      // Show the toast FIRST, then trigger the success callback
+      toast.success(result.message || "Customer saved successfully!");
       onSuccess();
-      toast.success("Customer saved successfully!");
     } catch (error: any) {
       setError("root", { type: "manual", message: error.message });
+      toast.error(error.message);
     }
   };
 

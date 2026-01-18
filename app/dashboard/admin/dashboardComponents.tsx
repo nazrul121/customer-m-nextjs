@@ -70,7 +70,9 @@ export default function DashboardComponent() {
             if (!response.ok) throw new Error('Failed to fetch billing data');
             return await response.json();
         },
-        enabled: mounted && !!session
+        enabled: mounted && !!session,
+        staleTime: 0, // Consider data old immediately so it re-fetches on navigation
+        refetchOnMount: true, // Re-fetch every time the component mounts (back button)
     });
     
     if (!mounted || isPending) return (

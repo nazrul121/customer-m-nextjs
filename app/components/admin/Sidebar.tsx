@@ -12,7 +12,10 @@ import {
   UserCog,
   PanelBottom,
   CalendarCheck,
+  CalculatorIcon,
+  BellPlus,
 } from "lucide-react";
+import Image from "next/image";
 
 type SidebarProps = {
   collapsed: boolean;
@@ -66,6 +69,21 @@ const menuItems = [
     ],
   },
   {
+    group: "Expenses",
+    items: [
+      {
+        name: "Expense Head",
+        href: "/dashboard/admin/expense/head",
+        icon: <BellPlus size={20} />,
+      },
+      {
+        name: "Expenses",
+        href: "/dashboard/admin/expense",
+        icon: <CalculatorIcon size={20} />,
+      },
+    ],
+  },
+  {
     group: "Users",
     items: [
       {
@@ -84,13 +102,15 @@ export default function Sidebar({ collapsed }: SidebarProps) {
     <ul className={`menu min-h-full bg-base-100 border-r border-base-200 p-2 transition-all duration-300 flex flex-col ${collapsed ? "w-20" : "w-72"}`}>
       {/* Logo */}
       <div className="flex-1">
-        <li className="mb-8 px-2 flex justify-center lg:justify-start">
+        <li className="mb-8 px-2 justify-center lg:justify-start">
         <Link href="/" className="text-xl font-black text-primary tracking-tighter">
-          {collapsed ? "MD" : "Micro Datasoft"}
+          {collapsed ? "MD" : (
+            <Image src="/images/logo.png" width={150} height={150} alt="Micro Datasoft" />
+          )}
         </Link> 
       </li>
       </div>
-        <div className="flex-7 flex flex-col justify-center">
+        <div className="flex-12 flex flex-col justify-center">
           {menuItems.map((section) => (
         <React.Fragment key={section.group}>
           {!collapsed && (

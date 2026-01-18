@@ -7,7 +7,7 @@ async function main() {
 
   const adminEmail = "admin@micro.com";
   const adminPassword = "12345678";
-  const adminPhone = '01749015454';
+  const adminPhone = '01749015457';
 
   // 1. Check if user already exists in Prisma first to avoid errors
   const existingUser = await prisma.user.findUnique({

@@ -96,15 +96,33 @@ export async function POST(request: Request) {
             }, { status: 400 });
         }
 
-        // 2. Handle File Uploads (Outside transaction to prevent DB locking)
+        // --- NEW: PRE-SIGNUP VALIDATION ---
+        // Check if Email or Phone already exists in the User table
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: validation.data.email },
+                    { phoneNumber: validation.data.phone }
+                ]
+            }
+        });
+
+        if (existingUser) {
+            const field = existingUser.email === validation.data.email ? 'Email' : 'Phone number';
+            return NextResponse.json({ 
+                message: `${field} is already registered to another account.` 
+            }, { status: 409 });
+        }
+        // ----------------------------------
+
+        // 2. Handle File Uploads
         const photoFile = formData.get('photo') as File | null;
         const aggreFile = formData.get('aggrePaper') as File | null;
-
         const photoUrl = await saveFile(photoFile, 'photos');
         const aggreUrl = await saveFile(aggreFile, 'agreements');
 
-        // 3. Create User & Account via Better-Auth
-        // Note: Better-Auth handles its own internal DB writes
+        // 3. Create User via Better-Auth
+        // Now much safer because we checked for existing users above
         const authResponse = await auth.api.signUpEmail({
             body: {
                 email: validation.data.email,
@@ -115,14 +133,13 @@ export async function POST(request: Request) {
         });
 
         if (!authResponse || !authResponse.user) {
-            throw new Error("Failed to create authentication account.");
+            throw new Error("Authentication service refused to create account.");
         }
 
         createdAuthUserId = authResponse.user.id;
 
-        // 4. Prisma Transaction for User Profile and Customer Record
+        // 4. Prisma Transaction
         const result = await prisma.$transaction(async (tx) => {
-            // Update User with additional metadata
             const updatedUser = await tx.user.update({
                 where: { id: createdAuthUserId! },
                 data: {
@@ -132,7 +149,6 @@ export async function POST(request: Request) {
                 }
             });
 
-            // Create the Customer Profile
             const newCustomer = await tx.customer.create({
                 data: {
                     name: validation.data.name,
@@ -149,23 +165,23 @@ export async function POST(request: Request) {
             return { customer: newCustomer, user: updatedUser };
         });
 
-        return NextResponse.json(result, { status: 201 });
+        return NextResponse.json({
+            message: 'Customer account created successfully',
+            data: result
+        }, { status: 201 });
 
     } catch (error: any) {
         console.error("POST Error:", error);
 
-        // ROLLBACK MANUALLY: Better-Auth is outside Prisma Transaction.
-        // If Customer creation fails, we must remove the orphan User.
         if (createdAuthUserId) {
             await prisma.user.delete({ where: { id: createdAuthUserId } }).catch(() => {
                 console.error("Cleanup failed: Could not delete orphan user.");
             });
         }
 
-        const status = error.message?.includes('already exists') ? 409 : 500;
         return NextResponse.json({ 
             message: error.message || 'Internal Server Error' 
-        }, { status });
+        }, { status: 500 });
     }
 }
 

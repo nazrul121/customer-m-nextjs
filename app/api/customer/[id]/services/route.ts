@@ -142,6 +142,18 @@ export async function POST(request: Request) {
                         setupBillId: newSetupBill?.id || null
                     }
                 });
+            }else{
+                const gl = await tx.generalLedger.create({
+                    data: {
+                        purpose: 'Aggrement',
+                        receivedBy: session.user.name,
+                        voucherNo: voucherNo,
+                        customerServiceId: newCustomerService.id,
+                        debitAmount: data.initCost,
+                        creditAmount:data.initPayment,
+                        voucherDate: data.aggreDate
+                    }
+                });
             }
 
             // Return the record data

@@ -185,6 +185,33 @@ CREATE TABLE `GeneralLedger` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `ExpenseHead` (
+    `id` VARCHAR(191) NOT NULL,
+    `title` VARCHAR(191) NOT NULL,
+    `description` TEXT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `ExpenseHead_title_key`(`title`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Expense` (
+    `id` VARCHAR(191) NOT NULL,
+    `expenseDate` DATETIME(3) NOT NULL,
+    `cost` DECIMAL(10, 2) NOT NULL,
+    `note` TEXT NULL,
+    `expenseById` VARCHAR(191) NOT NULL,
+    `expenseHeadId` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    INDEX `Expense_expenseHeadId_idx`(`expenseHeadId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `session` ADD CONSTRAINT `session_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -217,3 +244,9 @@ ALTER TABLE `GeneralLedger` ADD CONSTRAINT `GeneralLedger_setupBillId_fkey` FORE
 
 -- AddForeignKey
 ALTER TABLE `GeneralLedger` ADD CONSTRAINT `GeneralLedger_monthlyBillId_fkey` FOREIGN KEY (`monthlyBillId`) REFERENCES `MonthlyBill`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Expense` ADD CONSTRAINT `Expense_expenseById_fkey` FOREIGN KEY (`expenseById`) REFERENCES `user`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Expense` ADD CONSTRAINT `Expense_expenseHeadId_fkey` FOREIGN KEY (`expenseHeadId`) REFERENCES `ExpenseHead`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

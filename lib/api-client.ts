@@ -5,3 +5,11 @@ export async function fetchServiceTypes() {
   }
   return response.json();
 }
+
+export async function fetchExpenseHead() {
+  const response = await fetch('/api/expense/head?simple=true');
+  if (!response.ok) {
+    throw new Error('Failed to fetch service types');
+  }
+  return response.json();
+}

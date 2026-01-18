@@ -123,13 +123,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers()
-        });
-
-        if (!session) {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        }
+        const session = await auth.api.getSession({ headers: await headers()});
+        if (!session) { return NextResponse.json({ message: 'Unauthorized' }, { status: 401 }); }
 
         const body = await request.json();
         const validated = MonthlyBillSchema.parse(body);
@@ -137,7 +132,7 @@ export async function POST(request: Request) {
         // Execute everything in a transaction for data integrity
         const result = await prisma.$transaction(async (tx) => {
             
-            // 1. Fetch data using 'tx' to lock the record (concurrency safety)
+            // 1. Fetch data using 'tx' to lock the record 
             const service = await tx.customerService.findUnique({
                 where: { id: validated.customerServiceId },
                 include: {
@@ -149,7 +144,7 @@ export async function POST(request: Request) {
 
             if (!service) throw new Error("Service not found");
 
-            // 2. Logic Check
+            // 2. Logic Check // here bills = monthly_bill
             const totalPaidSoFar = service.bills.reduce((sum, b) => sum + Number(b.paidAmount), 0);
             const mmc = Number(service.mmc);
             const remainingDue = mmc - totalPaidSoFar;
@@ -168,7 +163,7 @@ export async function POST(request: Request) {
             const voucherNo = await generateVoucherNo(tx);
 
             // 4. Create Payment (Using 'tx', NOT 'prisma')
-            const payment = await tx.monthlyBill.create({
+            const monthlyBill = await tx.monthlyBill.create({
                 data: {
                     customerServiceId: validated.customerServiceId,
                     monthFor: validated.monthFor,
@@ -179,17 +174,18 @@ export async function POST(request: Request) {
                 }
             });
 
+          
             // 5. generate a ladger to get payment against
             const billingDate = new Date(`${validated.monthFor}-01`);
+            const year = billingDate.getFullYear();
+            const month = String(billingDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const formattedMonthFor = `${year}-${month}`; // Result: "2026-01"
 
-            // Check if a Debit for this month's bill already exists to avoid duplicate debt
-            const existingDebit = await tx.generalLedger.findFirst({
+            // Check if a Debit for this month's bill already exists
+            const existingDebit = await tx.monthlyBill.findFirst({
                 where: {
                     customerServiceId: validated.customerServiceId,
-                    purpose: 'MonthlyBill',
-                    voucherDate: billingDate,
-                    debitAmount: { gt: 0 } ,
-                    monthlyBillId:payment.id
+                    monthFor: formattedMonthFor, // 🔑 Now matches the DB format
                 }
             });
 
@@ -204,7 +200,7 @@ export async function POST(request: Request) {
                         creditAmount: 0,
                         debitAmount: mmc,
                         receivedBy: 'SYSTEM', 
-                        monthlyBillId:payment.id
+                        monthlyBillId:monthlyBill.id
                     }
                 });
             }
@@ -219,11 +215,11 @@ export async function POST(request: Request) {
                     customerServiceId: validated.customerServiceId,
                     creditAmount: validated.paidAmount,
                     receivedBy: session.user.name,
-                    monthlyBillId:payment.id
+                    monthlyBillId:monthlyBill.id
                 }
             });
 
-            return payment; // 🔑 Return this so it's assigned to 'result'
+            return monthlyBill; // 🔑 Return this so it's assigned to 'result'
         });
 
         return NextResponse.json({

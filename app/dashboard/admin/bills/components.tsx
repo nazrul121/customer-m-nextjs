@@ -86,11 +86,8 @@ export default function BillCrud() {
           <div className="flex items-center gap-3">
             <div className="avatar">
               <div className="bg-neutral text-neutral-content rounded-full w-10 h-10 flex items-center justify-center overflow-hidden">
-                {photo ? (
-                  <img src={photo} alt={customer?.name || 'Customer'} className="object-cover w-full h-full" />
-                ) : (
-                  <User size={26} />
-                )}
+                {photo ? (<img src={photo} alt={customer?.name || 'Customer'} className="object-cover w-full h-full" />) 
+                : ( <User size={26} /> )}
               </div>
             </div>
             <div className="flex flex-col">
@@ -119,12 +116,10 @@ export default function BillCrud() {
       cell: (info) => (
         <div className="font-mono font-bold">
           {Number(info.getValue()).toLocaleString()} <span className="text-[10px]">BDT</span>
-          {info.row.original.mmcDis > 0 && (
-               <>
-                <br />  <span className="text-[9px] text-error line-through">
-                    Disc: {info.row.original.mmcDis}
-                </span>
-                </>
+          {info.row.original.mmcDis > 0  && (
+              <>
+                <span className="text-[9px] text-error line-through"> Disc: {info.row.original.mmcDis}</span>
+              </>
             )}
         </div>
       ),

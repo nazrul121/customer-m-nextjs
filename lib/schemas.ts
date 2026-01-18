@@ -105,7 +105,6 @@ export const MonthlyBillSchema = z.object({
 export type MonthlyBillForm = z.infer<typeof MonthlyBillSchema>;
 
 
-			
 export const SetupBillSchema = z.object({
   customerServiceId: z.string().min(1, "Required"),
   // 🔑 Use coerce to turn string input into a number
@@ -117,3 +116,20 @@ export const SetupBillSchema = z.object({
 });
 export type SetupBillForm = z.input<typeof SetupBillSchema>;
 
+			
+export const ExpenseHeadSchema = z.object({
+  title: z.string()
+    .min(2, { message: 'Expense head be 2 or more characters long' })
+    .max(50, { message: 'Expense head cannot exceed 50 characters' }),
+    description: z.string().max(100, { message: 'Description cannot exceed 100 characters' }),
+});
+export type ExpenseHeadForm = z.input<typeof ExpenseHeadSchema>;
+
+export const ExpenseSchema = z.object({
+  expenseDate: z.coerce.date(),
+  cost: z.number().min(0, 'Finalized cost is required'),
+  expenseHeadId: z.string().min(1, 'Expense head is required'),
+  note: z.string().max(100, { message: 'Note cannot exceed 100 characters' }).optional().or(z.literal('')),
+});
+
+export type ExpenseForm = z.input<typeof ExpenseSchema>;
